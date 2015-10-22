@@ -2,7 +2,7 @@
 
 (asdf:defsystem #:err
   :description "errr"
-  :author "Ed <hahahadude@gmail.com>"
+  :author "Ed Ye <hahahadude@gmail.com>"
   :license "Licenseless Rider"
   :depends-on (#:alexandria
                #:cl-glfw3
