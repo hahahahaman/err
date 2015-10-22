@@ -1,11 +1,5 @@
 (in-package :err)
 
-(defglobal *entities* (empty-map))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; entities
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (let ((id 0))
   (defun make-entity (components &optional (entities *entities*))
     (incf id)

@@ -1,6 +1,17 @@
 (in-package #:err)
 
 ;;; utils
+
+(defun square (x)
+  (* x x))
+(defun cube (x)
+  (* x x x))
+
+(defun dist-mod (a b modulo)
+  "Distance between A and B, when mod."
+  (min (mod (- a b) modulo) (mod (- b a) modulo)))
+
+;; fps
 (let* ((max-samples 500)
        (samples (make-array max-samples
                             :element-type 'double-float
@@ -12,11 +23,15 @@
     ;; (print *dt*)
     (/ max-samples (reduce #'+ samples))))
 
-;;; global system specific
-(defun clear-actions ()
-  "Clears the input actions from last frame."
-  (setf *key-actions* nil
-        *mouse-button-actions* nil))
+(defun cap-fps ()
+  "Cap frame rate, preventing resource hogging"
+  (let ((frame-diff (- (+ (/ 1.0d0 +max-fps+) *previous-time*) (glfw:get-time))))
+    (when (> frame-diff 0)
+      (sleep frame-diff))))
+
+;;;;;;;;;;;;;;;;;
+;; handle globals
+;;;;;;;;;;;;;;;;;
 
 (defun update-dt ()
   "Called in the main loop, updates time globals."
@@ -28,19 +43,22 @@
   ;; prevent unruly time steps from breaking game
   (setf *dt* (max 0.0d0 (min 0.25d0 *dt*))))
 
-(defun cap-fps ()
-  "Cap frame rate, preventing resource hogging"
-  (let ((frame-diff (- (+ (/ 1.0d0 +max-fps+) *previous-time*) (glfw:get-time))))
-    (when (> frame-diff 0)
-      (sleep frame-diff)
-      ;; (print frame-diff)
-      )))
+(defun clear-actions ()
+  "Clears the input actions from last frame."
+  (setf *key-actions* nil
+        *mouse-button-actions* nil))
 
 (defun update-globals ()
   "A single function that encompasses global updates"
   (clear-actions)
   (update-dt)
   (cap-fps))
+
+(defun initialize-globals ()
+  (iter (for (var-symbol func) on *global-setfs* by #'cddr)
+    (funcall func)))
+
+;;; glfw
 
 (defun update-window-title (window title)
   (cl-glfw3:set-window-title
@@ -63,28 +81,8 @@
            (size *matrices*))
    window))
 
-(defun initialize-globals ()
-  (iter (for (var-symbol func) on *global-setfs* by #'cddr)
-    (funcall func)))
-
-(defun key-action-p (key action)
-  "Returns true if KEY is in *key-actions* and its state is EQ to ACTION."
-  (let ((state (getf *key-actions* key)))
-    (and (not (null state)) ;; if STATE is not null then key must have been found
-         (eq action state))))
-
-(defun key-pressed-p (key)
-  (getf *key-pressed* key))
-
-(defun mouse-button-action-p (button action)
-  "Returns true if KEY is in *mouse-button-actions* and its state is EQ to ACTION."
-  (let ((state (getf *mouse-button-actions* button)))
-    (and (not (null state)) ;; if STATE is not null then button be active
-         (eq action state))))
-(defun mouse-button-pressed-p (button)
-  (getf *mouse-button-pressed* button))
-
 ;;; type utils
+
 (defun concat-vecs (&rest vecs)
   "Creates of single-float simple-array from lone values, lists, and/or vectors."
   (let* ((len 0) ;; keeps track of simple-array length
@@ -117,15 +115,6 @@ Remember to free gl-array afterwards."
      ,@body
      (gl:free-gl-array ,var)))
 
-(defun square (x)
-  (* x x))
-(defun cube (x)
-  (* x x x))
-
-(defun dist-mod (a b modulo)
-  "Distance between A and B, when mod."
-  (min (mod (- a b) modulo) (mod (- b a) modulo)))
-
 (defun random-in-range (start end)
   "Random number between start and end inclusive."
   (+ start (random (- (1+ end) start))))
@@ -144,11 +133,17 @@ Remember to free gl-array afterwards."
   "Multiply sizeof TYPE, by MULTIPLE"
   (* (sizeof type) multiple))
 
+;;;;;;;;;;;
+;; vectors
+;;;;;;;;;;;
+
+#|
 (defmacro define-vec-op (name func &rest args)
   `(defun ,name (,@args)
      (cl:map (type-of ,(car args))
              ,func
              ,@args)))
+|#
 
 (defun vec-add (v1 v2)
   ;; (declare (optimize (speed 3) (safety 0)))
@@ -213,30 +208,13 @@ V1 and V2."
 (defun w-val (vec)
   (aref vec 3))
 
-;; (defun (setf x-val) (value vec)
-;;   (setf (aref vec 0) value))
-;; (defun (setf y-val) (value vec)
-;;   (setf (aref vec 1) value))
-;; (defun (setf z-val) (value vec)
-;;   (setf (aref vec 2) value))
-
-;; (defun get-slot (object &rest nested-slot-names)
-;;   "Recursively getting slot-value of slot-value."
-;;   (iter (with current = object) (for s in nested-slot-names)
-;;     (setf current (slot-value current s))
-;;     (finally (return current))))
+;;; slots
 
 (defmacro get-slot (object &rest nested-slot-names)
   (iter (iter:with current = object)
     (for s in nested-slot-names)
     (setf current `(slot-value ,current ,s))
     (finally (return current))))
-
-;; (defun (setf get-slot) (value object &rest nested-slot-names)
-;;   (iter (with current = object)
-;;     (for s in nested-slot-names)
-;;     (setf current `(slot-value ,current ,s))
-;;     (finally (return (setf current value)))))
 
 ;;; file io
 
@@ -249,20 +227,8 @@ V1 and V2."
           (while sexp)
           (collect sexp))))))
 
-(defun read-entire-file (filename)
-  "DEPRECATED. Returns a string with the entire content of a FILENAME, including
-whitespaces."
-  (with-open-file (file filename :direction :input)
-    (if file
-        (let ((str ""))
-          (iter
-            (for line = (read-line file nil nil))
-            (while line)
-            (setf str (concatenate 'string str (format nil "~a~%" line))))
-          str)
-        (error "Unable to open file ~a.~%" file))))
+;;; swank stuff
 
-;; swank stuff
 (defmacro continuable (&body body)
   "Helper macro that we can use to allow us to continue from an
   error. Remember to hit C in slime or pick the restart so errors don't kill the app."
@@ -308,6 +274,8 @@ whitespaces."
               (list form x)))
       x))
 
+;; list utils
+
 (defun drop-nth (n list)
   (append (subseq list 0 n) (nthcdr (1+ n) list)))
 
@@ -331,7 +299,23 @@ whitespaces."
            (return (append (subseq place 0 (1+ n))
                            (cons value (nthcdr (+ n 2) place))))))))
 
+;;; fset functions
+
 (defun get-map-keys (to-type map)
   (image (lambda (x) (car x)) (convert to-type map)))
 (defun get-map-values (to-type map)
   (image (lambda (x) (cdr x)) (convert to-type map)))
+
+;; destructive fset stuff
+
+(defmacro with! (collection value1 &optional value2)
+  (setf collection (with collection value1 value2)))
+(defmacro less! (collection value1 &optional value2)
+  (setf collection (less collection value1 value2)))
+
+;;;
+;;; Garbage Collection
+;;;
+
+(defun gc (&key full verbose)
+  (trivial-garbage:gc :full full :verbose verbose))

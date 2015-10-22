@@ -1,23 +1,5 @@
 (in-package :err)
 
-;;; time travel
-
-(defenum:defenum *enum-time-travel-state* ((+time-play+ 0)
-                                           +time-paused+
-                                           +time-rewind+
-                                           +time-forward+))
-
-(defglobal *time-travel-state* +time-play+)
-(defglobal *current-frame* 0)
-(defglobal *max-frame-index* 0)
-(defglobal *timeline*
-    (make-array 500000 :element-type 'list
-                       :initial-element nil
-                       :adjustable t
-                       :fill-pointer 0))
-
-(defglobal *tracked-vars* nil)
-
 ;;; timeline
 
 (defmacro var-keyword (var)
@@ -85,10 +67,6 @@ that returns a list that has stuff that can update *TIMELINE*."
     (setf *time-travel-state* +time-play+
           (fill-pointer *timeline*) *current-frame*
           *max-frame-index* *current-frame*)))
-
-;;; rewind and fast-forward
-(defglobal *time-speed-multiplier* (vector 1 2 4 8 16 32))
-(defglobal *time-speed-index* 0)
 
 (defun forward-pressed ()
   (cond ((not (eql *time-travel-state* +time-forward+))

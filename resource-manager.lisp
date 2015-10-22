@@ -1,8 +1,5 @@
 (in-package #:err)
 
-(defglobal *program-manager* nil)
-(defglobal *texture-manager* nil)
-
 ;;; resource manager
 
 (defclass resource-manager ()

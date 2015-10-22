@@ -1,31 +1,5 @@
 (in-package :err)
 
-;;; actions
-;; p-lists that keep track of the current actions on keys and buttons
-(defglobal *key-actions* ())
-(defglobal *mouse-button-actions* ())
-(defglobal *key-pressed* ())
-(defglobal *mouse-button-pressed* ())
-
-;;; cursor position values
-(defglobal *cursor-callback-p* nil) ;; cursor has been moved
-(defglobal *first-mouse* t) ;; checks if first time cursor has been moved
-
-;; current cursor position
-(defglobal *cursor-x* (/ *width* 2.0))
-(defglobal *cursor-y* (/ *height* 2.0))
-
-;; previous cursor position
-(defglobal *last-x* (/ *width* 2.0))
-(defglobal *last-y* (/ *height* 2.0))
-
-;; the scroll wheel has been used
-(defglobal *scroll-callback-p* nil)
-
-;; number of ticks of the scroll wheel
-(defglobal *scroll-x* (/ *width* 2.0))
-(defglobal *scroll-y* (/ *height* 2.0))
-
 ;;; input
 ;; keys pressed
 (glfw:def-key-callback key-callback (window key scancode action mod-keys)
@@ -70,3 +44,21 @@
   (setf *scroll-callback-p* t
         *scroll-x* x
         *scroll-y* y))
+
+(defun key-action-p (key action)
+  "Returns true if KEY is in *key-actions* and its state is EQ to ACTION."
+  (let ((state (getf *key-actions* key)))
+    (and (not (null state)) ;; if STATE is not null then key must have been found
+         (eq action state))))
+
+(defun key-pressed-p (key)
+  (getf *key-pressed* key))
+
+(defun mouse-button-action-p (button action)
+  "Returns true if KEY is in *mouse-button-actions* and its state is EQ to ACTION."
+  (let ((state (getf *mouse-button-actions* button)))
+    (and (not (null state)) ;; if STATE is not null then button be active
+         (eq action state))))
+
+(defun mouse-button-pressed-p (button)
+  (getf *mouse-button-pressed* button))

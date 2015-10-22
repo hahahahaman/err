@@ -21,8 +21,9 @@
                (:file "event")
                (:file "input")
                (:file "program")
+               (:file "texture2d")
                (:file "resource-manager")
                (:file "drawer")
-
+               (:file "entity")
                (:file "err")))
 

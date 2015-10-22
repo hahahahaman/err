@@ -4,8 +4,6 @@
 
 (in-package :err)
 
-(defglobal *destructive-changes* ())
-
 (defun add-event (func)
   (alexandria:appendf *destructive-changes* (list func)))
 

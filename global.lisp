@@ -18,10 +18,85 @@ can be used to reset VAR to VAL."
 (defglobal *height* 800)
 
 ;;; delta time
-;; *DT* keeps track of the time since last frame, in seconds
-;; *PREVIOUS-TIME* gives the time, in seconds, of the previous frame
-;; since the start of the program, and (glfw:get-time) returns the
-;; current time
 (defconstant +max-fps+ 150)
-(defglobal *dt* 0.02d0)
-(defglobal *previous-time* 0.0)
+(defglobal *dt* 0.02d0) ;; *DT* keeps track of the time since last frame, in seconds
+(defglobal *previous-time* 0.0) ;; *PREVIOUS-TIME* gives the time of the previous frame
+
+#|
+input
+|#
+
+;; p-lists that keep track of the current actions on keys and buttons
+(defglobal *key-actions* ())
+(defglobal *mouse-button-actions* ())
+(defglobal *key-pressed* ())
+(defglobal *mouse-button-pressed* ())
+
+;;; cursor position values
+(defglobal *cursor-callback-p* nil) ;; cursor has been moved
+(defglobal *first-mouse* t) ;; checks if first time cursor has been moved
+
+;; current cursor position
+(defglobal *cursor-x* (/ *width* 2.0))
+(defglobal *cursor-y* (/ *height* 2.0))
+
+;; previous cursor position
+(defglobal *last-x* (/ *width* 2.0))
+(defglobal *last-y* (/ *height* 2.0))
+
+;; the scroll wheel has been used
+(defglobal *scroll-callback-p* nil)
+
+;; number of ticks of the scroll wheel
+(defglobal *scroll-x* (/ *width* 2.0))
+(defglobal *scroll-y* (/ *height* 2.0))
+
+#|
+time-travel
+|#
+
+(defenum:defenum *enum-time-travel-state* ((+time-play+ 0)
+                                           +time-paused+
+                                           +time-rewind+
+                                           +time-forward+))
+
+(defglobal *time-travel-state* +time-play+)
+(defglobal *current-frame* 0)
+(defglobal *max-frame-index* 0)
+(defglobal *timeline*
+    (make-array 500000 :element-type 'list
+                       :initial-element nil
+                       :adjustable t
+                       :fill-pointer 0))
+
+(defglobal *tracked-vars* nil)
+
+;;; rewind and fast-forward
+(defglobal *time-speed-multiplier* (vector 1 2 4 8 16 32))
+(defglobal *time-speed-index* 0)
+
+#|
+events
+|#
+
+(defglobal *destructive-changes* ())
+
+#|
+resource-manager
+|#
+
+(defglobal *program-manager* nil)
+(defglobal *texture-manager* nil)
+
+#|
+drawer
+|#
+
+(defglobal *sprite-drawer* nil)
+(defglobal *rect-drawer* nil)
+
+#|
+entity
+|#
+
+(defglobal *entities* (empty-map))

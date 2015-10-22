@@ -1,8 +1,5 @@
 (in-package #:err)
 
-(defglobal *sprite-drawer* nil)
-(defglobal *rect-drawer* nil)
-
 ;;; drawers
 
 (defclass drawer ()
