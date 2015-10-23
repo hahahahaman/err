@@ -46,7 +46,9 @@
 (defun clear-actions ()
   "Clears the input actions from last frame."
   (setf *key-actions* nil
-        *mouse-button-actions* nil))
+        *mouse-button-actions* nil
+        *scroll-callback-p* nil
+        *cursor-callback-p* nil))
 
 (defun update-globals ()
   "A single function that encompasses global updates"
@@ -57,29 +59,6 @@
 (defun initialize-globals ()
   (iter (for (var-symbol func) on *global-setfs* by #'cddr)
     (funcall func)))
-
-;;; glfw
-
-(defun update-window-title (window title)
-  (cl-glfw3:set-window-title
-   (format nil "~A | fps: ~A | time: ~A | time-travel-state: ~A | level: ~A | grid: ~A / ~A"
-           title
-           (round (average-fps))
-           *current-frame*
-           (cond ((eql *time-travel-state* +time-play+)
-                  "PLAY")
-                 ((eql *time-travel-state* +time-paused+)
-                  "PAUSED")
-                 ((eql *time-travel-state* +time-forward+)
-                  (format nil "FORWARD x~d"
-                          (aref *time-speed-multiplier* *time-speed-index*)))
-                 ((eql *time-travel-state* +time-rewind+)
-                  (format nil "REWIND x~d"
-                          (aref *time-speed-multiplier* *time-speed-index*))))
-           (- *difficulty* 2)
-           (1+ *selected-matrix*)
-           (size *matrices*))
-   window))
 
 ;;; type utils
 

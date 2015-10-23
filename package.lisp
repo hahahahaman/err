@@ -21,7 +21,7 @@
                           #:with)
   (:export
    ;; globals
-   *global-setfs*
+   :*global-setfs*
    defglobal
 
    ;; window dimensions
@@ -84,9 +84,7 @@
    :update-dt
    :clear-actions
    :update-globals
-   :initialize-globas
-
-   :update-window-title
+   :initialize-globals
 
    :concat-vecs
    :sequence-to-gl-array
@@ -136,6 +134,7 @@
 
    :gc
 
+   ;;; timeline stuff
    :var-keyword
    :var-keyword-macro
    :track-var
@@ -150,14 +149,23 @@
    :rewind-pressed
    :rewind-time
 
+   ;;; events
    :add-event
    :update-events
+
+   ;;; input
+   ;; glfw callback
+   :key-callback
+   :mouse-callback
+   :cursor-callback
+   :scroll-callback
 
    :key-action-p
    :key-pressed-p
    :mouse-button-action-p
    :mouse-button-pressed-p
 
+   :id
    :program
    :use
    :load-shader-file
@@ -170,6 +178,12 @@
    :texture2d-generate
    :bind
    :make-texture2d
+   ;; :width
+   ;; :height
+   ;; :internal-format
+   ;; :image-format
+   ;; :wrap-s
+   ;; :wrap-t
 
    :resource-manager
    :program-manager
