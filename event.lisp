@@ -4,8 +4,8 @@
 
 (in-package :err)
 
-(defun add-event (func)
-  (alexandria:appendf *destructive-changes* (list func)))
+(defmacro add-event (&key code)
+  `(alexandria:appendf *destructive-changes* (list (lambda () ,code))))
 
 (defun update-events ()
   (mapcar #'funcall *destructive-changes*)

@@ -57,6 +57,10 @@
   (cap-fps))
 
 (defun initialize-globals ()
+  ;; random seed
+  (setf *random-state* (make-random-state t))
+
+  ;; go through all globals setting them to original value
   (iter (for (var-symbol func) on *global-setfs* by #'cddr)
     (funcall func)))
 
@@ -115,6 +119,35 @@ Remember to free gl-array afterwards."
 ;;;;;;;;;;;
 ;; vectors
 ;;;;;;;;;;;
+
+;; code from mathkit
+(defmacro define-vecn (n type &optional (prefix ""))
+  (let ((vecn (alexandria:symbolicate (string-upcase prefix)
+                                      'vec (format nil "~A" n))))
+    `(progn
+       (deftype ,vecn () '(simple-array ,type (,n)))
+       (defun ,vecn (a &rest r)
+         (etypecase a
+           (vector
+            (cond
+              ((= (length a) ,n) a)
+              ((> (length a) ,n)
+               (let ((a+ (make-array ,n :element-type ',type)))
+                 (replace a+ a)
+                 a+))
+              (t (let* ((a+ (make-array ,n :element-type ',type)))
+                   (replace a+ a)
+                   (replace a+ r :start1 (length a))
+                   a+))))
+           (,type
+            (let* ((a+ (make-array ,n :element-type ',type)))
+              (setf (aref a+ 0) a)
+              (replace a+ r :start1 1)
+              a+)))))))
+
+(define-vecn 2 integer "i")
+(define-vecn 3 integer "i")
+(define-vecn 4 integer "i")
 
 #|
 (defmacro define-vec-op (name func &rest args)
@@ -288,9 +321,9 @@ V1 and V2."
 ;; destructive fset stuff
 
 (defmacro with! (collection value1 &optional value2)
-  (setf collection (with collection value1 value2)))
+  `(setf ,collection (with ,collection ,value1 ,value2)))
 (defmacro less! (collection value1 &optional value2)
-  (setf collection (less collection value1 value2)))
+  `(setf ,collection (less ,collection ,value1 ,value2)))
 
 ;;;
 ;;; Garbage Collection
@@ -298,3 +331,20 @@ V1 and V2."
 
 (defun gc (&key full verbose)
   (trivial-garbage:gc :full full :verbose verbose))
+
+;;;
+;;; build file
+;;;
+
+;; (defun make-build-file (path entry &key system output))
+
+;;;
+;;; md5
+;;;
+
+(defun md5 (str)
+  (ironclad:byte-array-to-hex-string
+   (ironclad:digest-sequence :md5 
+                             (ironclad:ascii-string-to-byte-array str))))
+(defun valid-md5? (checksum str)
+  (string= checksum (md5 str)))
