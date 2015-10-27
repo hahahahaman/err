@@ -65,13 +65,25 @@
    ;; resource managers
    *program-manager*
    *texture-manager*
+   *font-manager*
 
    ;; drawers
    *sprite-drawer*
    *rect-drawer*
+   *text-drawer*
 
    ;;entities
    *entities*
+
+   ;;; timer
+   :timer
+   :timer-end
+   :timer-time
+   :make-timer
+
+   :timer-ended?
+   :timer-update
+   :timer-reset
 
    ;;; utils
    :square
@@ -134,6 +146,8 @@
 
    :gc
 
+   :md5
+
    ;;; timeline stuff
    :var-keyword
    :var-keyword-macro
@@ -186,17 +200,21 @@
    ;; :wrap-t
 
    :resource-manager
-   :program-manager
-   :texture-manager
    :load-resource
    :get-resource
    :clear-resources
-   :load-resource
-   :load-texture
+
+   :program-manager
    :load-program
-   :get-resource
-   :get-texture
    :get-program
+
+   :texture-manager
+   :load-texture
+   :get-texture
+
+   :font-manager
+   :load-font
+   :get-font
 
    :drawer
    :sprite-drawer
@@ -214,6 +232,4 @@
    :get-entity-component
    :set-entity-component
    :find-entities
-   :find-entity-by-component)
-  )
-
+   :find-entity-by-component))

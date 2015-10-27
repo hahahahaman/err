@@ -15,7 +15,7 @@ can be used to reset VAR to VAL."
 ;;;; misc. globals
 ;;; screen
 (defglobal *width* 800)
-(defglobal *height* 800)
+(defglobal *height* 600)
 
 ;;; delta time
 (defconstant +max-fps+ 150)
@@ -87,6 +87,7 @@ resource-manager
 
 (defglobal *program-manager* nil)
 (defglobal *texture-manager* nil)
+(defglobal *font-manager* nil)
 
 #|
 drawer
@@ -94,6 +95,7 @@ drawer
 
 (defglobal *sprite-drawer* nil)
 (defglobal *rect-drawer* nil)
+(defglobal *text-drawer* nil)
 
 #|
 entity

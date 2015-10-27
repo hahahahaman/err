@@ -12,10 +12,13 @@
                #:glkit
                #:trivial-garbage
                #:defenum
-               #:swank)
+               #:swank
+               #:ironclad
+               #:cl-freetype2)
   :serial t
   :components ((:file "package")
                (:file "global")
+               (:file "timer")
                (:file "utils")
                (:file "time-travel")
                (:file "event")
@@ -24,6 +27,9 @@
                (:file "texture2d")
                (:file "resource-manager")
                (:file "drawer")
+               (:file "sprite-drawer")
+               (:file "rect-drawer")
+               (:file "text-drawer")
                (:file "entity")
                (:file "err")))
 
