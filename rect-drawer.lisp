@@ -23,12 +23,12 @@
 
       (gl:delete-buffers (list vbo)))))
 
-(defmethod rect-draw ((position vector)
-                      &optional
-                        (size (kit.glm:vec2 10.0 10.0))
-                        (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
-                        (rotate 0.0)
-                        (drawer *rect-drawer*))
+(defun rect-draw (&key
+                    (position (vec3 0.0 0.0 0.0))
+                    (size (kit.glm:vec2 10.0 10.0))
+                    (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
+                    (rotate 0.0)
+                    (drawer *rect-drawer*))
   (with-accessors ((program program) (vao vao)) drawer
     (use program)
 

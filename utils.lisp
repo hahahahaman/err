@@ -220,6 +220,13 @@ V1 and V2."
 (defun w-val (vec)
   (aref vec 3))
 
+(defun (setf x-val) (value vec)
+  (setf (aref vec 0) value))
+(defun (setf y-val) (value vec)
+  (setf (aref vec 1) value))
+(defun (setf z-val) (value vec)
+  (setf (aref vec 2) value))
+
 ;;; slots
 
 (defmacro get-slot (object &rest nested-slot-names)

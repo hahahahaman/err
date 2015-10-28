@@ -31,13 +31,13 @@
       ;; (gl:free-gl-array verts)
       (gl:delete-buffers (list vbo)))))
 
-(defmethod sprite-draw ((texture2d texture2d)
-                        (position vector)
-                        &optional
-                          (size (kit.glm:vec2 10.0 10.0))
-                          (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
-                          (rotate 0.0)
-                          (drawer *sprite-drawer*))
+(defun sprite-draw (texture2d
+                    &key
+                      (position (vec3 0.0 0.0 0.0))
+                      (size (kit.glm:vec2 10.0 10.0))
+                      (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
+                      (rotate 0.0)
+                      (drawer *sprite-drawer*))
   (with-accessors ((program program) (vao vao)) drawer
     (use program)
 
@@ -65,7 +65,7 @@
 
     ;; bind TEXTURE2D
     (gl:active-texture :texture0)
-    (bind texture2d)
+    (gl:bind-texture :texture-2d (id texture2d))
 
     ;; draw
     (gl:bind-vertex-array vao)

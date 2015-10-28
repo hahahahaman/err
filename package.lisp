@@ -106,6 +106,12 @@
    :sizeof
    :sizeof*
 
+   ;;; vectors
+   :define-vecn
+   :ivec2
+   :ivec3
+   :ivec4
+
    :vec-add
    :vec-mul
    :vec-div
@@ -216,11 +222,26 @@
    :load-font
    :get-font
 
+   ;;; drawers
    :drawer
+   :vao
    :sprite-drawer
    :sprite-draw
+
    :rect-drawer
    :rect-draw
+
+   :text-char
+   :texture-id
+   :text-char-size
+   :text-char-bearing
+   :text-char-advance
+   :make-text-char
+
+   :text-drawer
+   :text-chars
+   :vbo
+   :text-draw
 
    :make-entity
    :add-entity
