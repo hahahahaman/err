@@ -21,12 +21,14 @@
                           #:with)
   (:export
    ;; globals
-   :*global-setfs*
-   defglobal
+   *global-setfs*
+   :defglobal
 
    ;; window dimensions
    *width*
    *height*
+
+   *debug*
 
    ;; fps
    +max-fps+
@@ -75,6 +77,9 @@
    ;;entities
    *entities*
 
+   ;;file tracking
+   *tracked-files*
+
    ;;; timer
    :timer
    :timer-end
@@ -91,12 +96,12 @@
    :dist-mod
 
    :average-fps
-   :cap-fps
+   ;; :cap-fps
 
-   :update-dt
-   :clear-actions
-   :update-globals
-   :initialize-globals
+   ;; :update-dt
+   ;; :clear-actions
+   ;; :update-globals
+   ;; :initialize-globals
 
    :concat-vecs
    :sequence-to-gl-array
@@ -133,8 +138,8 @@
 
    :read-sexp-from-file
 
-   :continuable
-   :update-swank
+   ;; :continuable
+   ;; :update-swank
 
    :copy-instance
 
@@ -169,16 +174,20 @@
    :rewind-pressed
    :rewind-time
 
+   ;;; file tracker
+   :track-file
+   :untrack-file
+
    ;;; events
    :add-event
-   :update-events
+   ;; :update-events
 
    ;;; input
-   ;; glfw callback
-   :key-callback
-   :mouse-callback
-   :cursor-callback
-   :scroll-callback
+   ;; glfw callback. Needed?
+   ;; :key-callback
+   ;; :mouse-callback
+   ;; :cursor-callback
+   ;; :scroll-callback
 
    :key-action-p
    :key-pressed-p
@@ -253,4 +262,7 @@
    :get-entity-component
    :set-entity-component
    :find-entities
-   :find-entity-by-component))
+   :find-entity-by-component
+
+   ;;; main
+   :run))

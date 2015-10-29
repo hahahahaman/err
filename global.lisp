@@ -17,6 +17,8 @@ can be used to reset VAR to VAL."
 (defglobal *width* 800)
 (defglobal *height* 600)
 
+(defglobal *debug* nil)
+
 ;;; delta time
 (defconstant +max-fps+ 150)
 (defglobal *dt* 0.02d0) ;; *DT* keeps track of the time since last frame, in seconds
@@ -102,3 +104,9 @@ entity
 |#
 
 (defglobal *entities* (empty-map))
+
+#|
+file tracking
+|#
+;; filepath : (checksum . hook)
+(defglobal *tracked-files* (make-hash-table :test 'equal))
