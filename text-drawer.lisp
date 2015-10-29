@@ -56,7 +56,7 @@
 
           (gl:buffer-data :array-buffer :dynamic-draw verts))
         (gl:draw-arrays :triangle-strip 0 4)
-        (incf (x-val position) (* (text-char-advance tc) (x-val scale)))))
+        (incf (x-val position) (text-char-advance tc))))
     (gl:bind-buffer :array-buffer 0)
     (gl:bind-vertex-array 0)
     (gl:bind-texture :texture-2d 0)))
