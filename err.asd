@@ -21,6 +21,7 @@
                (:file "timer")
                (:file "utils")
                (:file "time-travel")
+               (:file "file-tracker")
                (:file "event")
                (:file "input")
                (:file "program")
@@ -34,5 +35,5 @@
                (:file "rect-drawer")
                (:file "text-drawer")
                (:file "entity")
-               (:file "err")))
+               (:file "main")))
 
