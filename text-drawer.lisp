@@ -32,46 +32,46 @@
           (lowest-y 0.0)
           (highest-y 0.0))
       (iter (for c in-vector text)
-            (let* ((tc (@ font-text-chars c))
-                   (xpos (* (+ (x-val position)
-                               (x-val (text-char-bearing tc)))
-                            (x-val scale)))
-                   (ypos (* (+ (y-val position)
-                               (- (y-val (text-char-bearing (@ font-text-chars #\H)))
-                                  (y-val (text-char-bearing tc))))
-                            (y-val scale)))
-                   (w (* (x-val (text-char-size tc)) (x-val scale)))
-                   (h (* (y-val (text-char-size tc)) (y-val scale))))
+        (let* ((tc (@ font-text-chars c))
+               (xpos (* (+ (x-val position)
+                           (x-val (text-char-bearing tc)))
+                        (x-val scale)))
+               (ypos (* (+ (y-val position)
+                           (- (y-val (text-char-bearing (@ font-text-chars #\H)))
+                              (y-val (text-char-bearing tc))))
+                        (y-val scale)))
+               (w (* (x-val (text-char-size tc)) (x-val scale)))
+               (h (* (y-val (text-char-size tc)) (y-val scale))))
 
-              (when (< ypos lowest-y)
-                (setf lowest-y ypos))
-              (when (> (+ ypos h) highest-y)
-                (setf highest-y (+ ypos h)))
+          (when (< ypos lowest-y)
+            (setf lowest-y ypos))
+          (when (> (+ ypos h) highest-y)
+            (setf highest-y (+ ypos h)))
 
-              (gl:active-texture :texture0)
-              (gl:bind-texture :texture-2d (text-char-texture-id tc))
+          (gl:active-texture :texture0)
+          (gl:bind-texture :texture-2d (text-char-texture-id tc))
 
-              (gl:bind-buffer :array-buffer vbo)
-              (gl:enable-vertex-attrib-array 0)
-              (gl:vertex-attrib-pointer 0 4 :float nil (sizeof* :float 4) 0)
+          (gl:bind-buffer :array-buffer vbo)
+          (gl:enable-vertex-attrib-array 0)
+          (gl:vertex-attrib-pointer 0 4 :float nil (sizeof* :float 4) 0)
 
-              (with-sequence-to-gl-array (verts
-                                          (vector
-                                           xpos       ypos       0.0 0.0
-                                           (+ xpos w) ypos       1.0 0.0
-                                           xpos       (+ ypos h) 0.0 1.0
-                                           (+ xpos w) (+ ypos h) 1.0 1.0)
-                                          :float)
+          (with-sequence-to-gl-array (verts
+                                      (vector
+                                       xpos       ypos       0.0 0.0
+                                       (+ xpos w) ypos       1.0 0.0
+                                       xpos       (+ ypos h) 0.0 1.0
+                                       (+ xpos w) (+ ypos h) 1.0 1.0)
+                                      :float)
 
-                (gl:buffer-data :array-buffer :dynamic-draw verts))
-              (gl:draw-arrays :triangle-strip 0 4)
-              (incf (x-val position) (text-char-advance tc))
-              (incf total-width (text-char-advance tc)))))
-    (gl:bind-buffer :array-buffer 0)
-    (gl:bind-vertex-array 0)
-    (gl:bind-texture :texture-2d 0)
-    (values total-width
-            (- highest-y lowest-y))))
+            (gl:buffer-data :array-buffer :dynamic-draw verts))
+          (gl:draw-arrays :triangle-strip 0 4)
+          (incf (x-val position) (text-char-advance tc))
+          (incf total-width (text-char-advance tc))))
+      (gl:bind-buffer :array-buffer 0)
+      (gl:bind-vertex-array 0)
+      (gl:bind-texture :texture-2d 0)
+      (values total-width
+              (- highest-y lowest-y)))))
 
 (defun text-width (text font-text-chars
                    &key
