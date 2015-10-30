@@ -35,5 +35,6 @@
                (:file "rect-drawer")
                (:file "text-drawer")
                (:file "entity")
-               (:file "main")))
+               (:file "main")
+               (:file "err")))
 
