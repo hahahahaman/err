@@ -37,7 +37,7 @@
                     (size (kit.glm:vec2 10.0 10.0))
                     (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
                     (rotate 0.0)
-                    (draw-mode :triangles)
+                    (draw-mode :triangle-strip)
                     (drawer *rect-drawer*))
   (with-accessors ((program program) (vao vao)) drawer
     (use program)
