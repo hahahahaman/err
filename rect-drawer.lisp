@@ -5,7 +5,8 @@
 
 (defmethod initialize-instance :after ((drawer rect-drawer) &key)
   (with-slots (vao) drawer
-    (let ((vbo (car (gl:gen-buffers 1))))
+    (let* ((buffers (gl:gen-buffers 2))
+           (vbo (first buffers)))
       (gl:bind-vertex-array vao)
       (gl:bind-buffer :array-buffer vbo)
       (with-sequence-to-gl-array (verts
@@ -15,19 +16,28 @@
                                           1.0 1.0)
                                   :float)
         (gl:buffer-data :array-buffer :static-draw verts))
+
+      ;; (gl:bind-buffer :element-array-buffer ebo)
+      ;; (with-sequence-to-gl-array (verts
+      ;;                             (vector 0 1 3 2 1)
+      ;;                             :unsigned-int)
+      ;;   (gl:buffer-data :element-array-buffer :static-draw verts))
+
       (gl:enable-vertex-attrib-array 0)
       (gl:vertex-attrib-pointer 0 2 :float nil (sizeof* :float 2) 0)
 
       (gl:bind-buffer :array-buffer 0)
+      ;; (gl:bind-buffer :element-array-buffer 0)
       (gl:bind-vertex-array 0)
 
-      (gl:delete-buffers (list vbo)))))
+      (gl:delete-buffers buffers))))
 
 (defun rect-draw (&key
                     (position (vec3 0.0 0.0 0.0))
                     (size (kit.glm:vec2 10.0 10.0))
                     (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
                     (rotate 0.0)
+                    (draw-mode :triangles)
                     (drawer *rect-drawer*))
   (with-accessors ((program program) (vao vao)) drawer
     (use program)
@@ -56,5 +66,12 @@
 
     ;; draw
     (gl:bind-vertex-array vao)
-    (gl:draw-arrays :triangle-strip 0 4)
+    (cond ((or (eql draw-mode :triangle-strip)
+               (eql draw-mode :triangles)
+               (eql draw-mode :points))
+           (gl:point-size 5.0)
+           (gl:draw-arrays draw-mode 0 4))
+          (t
+           (with-sequence-to-gl-array (verts (vector 0 1 3 2 0) :unsigned-int)
+             (gl:draw-elements draw-mode verts))))
     (gl:bind-vertex-array 0)))
