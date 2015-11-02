@@ -5,16 +5,17 @@
   :author "Ed Ye <hahahadude@gmail.com>"
   :license "Licenseless Rider"
   :depends-on (#:alexandria
+               #:iterate
                #:cl-glfw3
                #:cl-opengl
                #:cl-soil
+               #:cl-freetype2
                #:fset
                #:glkit
                #:trivial-garbage
                #:defenum
                #:swank
-               #:ironclad
-               #:cl-freetype2)
+               #:ironclad)
   :serial t
   :components ((:file "package")
                (:file "global")
