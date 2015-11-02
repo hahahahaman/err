@@ -53,17 +53,14 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   ```
   git clone https://github.com/hahahahaman/err
   ```
-4. add project to asdf:
-
-  ```lisp
-  (push #p"/path/to/err" asdf:*central-registry*)
-  ```
-5. launch Common Lisp and load err:
+4. launch Common Lisp, add project to asdf, and load err:
 
   ```lisp
   $ sbcl
 
+  * (push #p"/path/to/err" asdf:*central-registry*)
+
   * (ql:quickload :err)
   ```
 
-Alternatives to steps 4 and 5 can be found [here](http://stackoverflow.com/questions/11261045/how-to-add-a-local-project-to-asdf-configured-by-quicklisp).
+Alternatives to step 4 can be found [here](http://stackoverflow.com/questions/11261045/how-to-add-a-local-project-to-asdf-configured-by-quicklisp).
