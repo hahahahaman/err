@@ -355,3 +355,27 @@ V1 and V2."
                              (ironclad:ascii-string-to-byte-array str))))
 (defun valid-md5? (checksum str)
   (string= checksum (md5 str)))
+
+;;;
+;;; some math
+;;;
+(defun radians->degrees (radians)
+  (* (/ 180 pi) radians))
+
+(defun degrees->radians (degrees)
+  (* (/ pi 180) degrees))
+
+(defun rotate-point-ccw (x y radians)
+  (values
+   (+ (* x (cos radians)) (- (* y (sin radians))))
+   (+ (* x (sin radians)) (* y (cos radians)))))
+
+(defun rect-in-rectangle-p (x y width height o-top o-left o-width o-height)
+  "Nice to have for on the spot rectangle coliision."
+  (declare (single-float x y width height o-top o-left o-width o-height)
+           (optimize (speed 3)))
+  (not (or
+        (<= (+ o-top o-height) y)
+        (<= (+ y height) o-top)
+        (<= (+ x width) o-left)
+        (<= (+ o-left o-width) x))))
