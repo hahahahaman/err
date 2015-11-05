@@ -359,11 +359,11 @@ V1 and V2."
 ;;;
 ;;; some math
 ;;;
-(defun radians->degrees (radians)
-  (* (/ 180 pi) radians))
+;; (defun radians->degrees (radians)
+;;   (* (/ 180 pi) radians))
 
-(defun degrees->radians (degrees)
-  (* (/ pi 180) degrees))
+;; (defun degrees->radians (degrees)
+;;   (* (/ pi 180) degrees))
 
 (defun rotate-point-ccw (x y radians)
   (values

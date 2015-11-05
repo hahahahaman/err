@@ -5,7 +5,7 @@
 
 (defmethod initialize-instance :after ((drawer rect-drawer) &key)
   (with-slots (vao) drawer
-    (let* ((buffers (gl:gen-buffers 2))
+    (let* ((buffers (gl:gen-buffers 1))
            (vbo (first buffers)))
       (gl:bind-vertex-array vao)
       (gl:bind-buffer :array-buffer vbo)

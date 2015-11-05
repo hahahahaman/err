@@ -62,3 +62,6 @@
 
 (defun mouse-button-pressed-p (button)
   (getf *mouse-button-pressed* button))
+
+(defun close-window ()
+  (glfw:set-window-should-close))
