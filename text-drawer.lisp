@@ -37,8 +37,8 @@
                            (x-val (text-char-bearing tc)))
                         (x-val scale)))
                (ypos (* (+ (y-val position)
-                           (- (y-val (text-char-bearing (@ font-text-chars #\H)))
-                              (y-val (text-char-bearing tc))))
+                           ;; (- (y-val (text-char-bearing (@ font-text-chars #\H))))
+                           (y-val (text-char-bearing tc)))
                         (y-val scale)))
                (w (* (x-val (text-char-size tc)) (x-val scale)))
                (h (* (y-val (text-char-size tc)) (y-val scale))))
@@ -59,8 +59,8 @@
                                       (vector
                                        xpos       ypos       0.0 0.0
                                        (+ xpos w) ypos       1.0 0.0
-                                       xpos       (+ ypos h) 0.0 1.0
-                                       (+ xpos w) (+ ypos h) 1.0 1.0)
+                                       xpos       (- ypos h) 0.0 1.0
+                                       (+ xpos w) (- ypos h) 1.0 1.0)
                                       :float)
 
             (gl:buffer-data :array-buffer :dynamic-draw verts))

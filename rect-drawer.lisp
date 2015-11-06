@@ -34,8 +34,8 @@
 
 (defun rect-draw (&key
                     (position (vec3 0.0 0.0 0.0))
-                    (size (kit.glm:vec2 10.0 10.0))
-                    (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
+                    (size (vec2 10.0 10.0))
+                    (color (vec4 1.0 1.0 1.0 1.0))
                     (rotate 0.0)
                     (draw-mode :triangle-strip)
                     (drawer *rect-drawer*))
