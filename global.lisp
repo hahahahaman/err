@@ -92,12 +92,19 @@ resource-manager
 (defglobal *font-manager* nil)
 
 #|
+camera
+|#
+
+(defglobal *camera*)
+
+#|
 drawer
 |#
 
 (defglobal *sprite-drawer* nil)
 (defglobal *rect-drawer* nil)
 (defglobal *text-drawer* nil)
+(defglobal *cube-drawer* nil)
 
 #|
 entity
