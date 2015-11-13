@@ -1,11 +1,4 @@
-(in-package :pajitnov)
-
-;;camera constants
-(defconstant +camera-yaw+ -90.0)
-(defconstant +camera-pitch+ 0.0)
-(defconstant +camera-speed+ 3.0)
-(defconstant +camera-sensitivity+ 0.30)
-(defconstant +camera-zoom+ 45.0)
+(in-package :err)
 
 (defenum:defenum camera-movement
                  ((+forward+ 0)
@@ -47,13 +40,12 @@
     :initarg :zoom))
   (:default-initargs
    :position (vec3 0.0 0.0 0.0)
-   :world-up (vec3 0.0 1.0 0.0)
-   :yaw +camera-yaw+
-   :pitch +camera-pitch+
    :front (vec3 0.0 0.0 -1.0)
-   :movement-speed +camera-speed+
-   :mouse-sensitivity +camera-sensitivity+
-   :zoom +camera-zoom+))
+   :world-up (vec3 0.0 1.0 0.0)
+   :yaw -90.0
+   :pitch 0.0
+   :movement-speed 3.0
+   :mouse-sensitivity 0.30))
 
 (defmethod initialize-instance :after ((cam camera) &key)
   (update-camera-vectors cam))
