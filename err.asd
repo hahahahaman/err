@@ -19,7 +19,7 @@
   :serial t
   :components ((:module src
                 :components ((:file "package")
-                             (:file "global")
+                             (:file "globals")
                              (:file "timer")
                              (:file "utils")
                              (:file "time-travel")
