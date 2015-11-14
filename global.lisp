@@ -117,3 +117,8 @@ file tracking
 |#
 ;; filepath : (checksum . hook)
 (defglobal *tracked-files* (make-hash-table :test 'equal))
+
+#|
+for when creating an executable
+|#
+(defglobal *executable* nil)

@@ -31,6 +31,7 @@
                (:file "program-manager")
                (:file "texture-manager")
                (:file "font-manager")
+               (:file "vertices")
                (:file "camera")
                (:file "drawer")
                (:file "sprite-drawer")
