@@ -45,7 +45,8 @@
    :yaw -90.0
    :pitch 0.0
    :movement-speed 3.0
-   :mouse-sensitivity 0.30))
+   :mouse-sensitivity 0.30
+   :zoom 45.0))
 
 (defmethod initialize-instance :after ((cam camera) &key)
   (update-camera-vectors cam))
