@@ -2,17 +2,20 @@
 (in-package :err-examples)
 
 #|
-1. seperation - move away, prevent crowding
+1. seperation - move away from close members, prevent crowding
 2. alignment - move with average velocity of close members
 3. cohesion - move towards average position of members
 |#
+
+(defglobal *boundary* (cons -20.0 20.0))
+(defglobal *move-camera?* t)
 
 (defun init-managers ()
   (setf *program-manager* (make-instance 'program-manager)
         *texture-manager* (make-instance 'texture-manager)
         *font-manager* (make-instance 'font-manager)))
 
-(defun flock-init ()
+(defun init-shaders ()
   (let* ((proj-dir (asdf:system-source-directory :err-examples))
          (shader-dir (if *executable*
                          #p"./data/shaders/"
@@ -27,7 +30,11 @@
     (init-managers)
     (setf *text-drawer* (make-instance 'text-drawer :program text-program)
           *cube-drawer* (make-instance 'cube-drawer :program cube-program)
-          *camera* (make-instance 'camera :position (vec3 0.0 0.0 3.0)))
+          *camera* (make-instance 'camera :position (vec3 0.0 0.0 20.0)))
+
+    (load-program "text" text-program)
+    (load-program "cube" cube-program)
+
     (load-font "sans24" (merge-pathnames #p"DejaVuSans.ttf" font-dir) 24)
 
     ;; set cube program matrices
@@ -47,9 +54,69 @@
       (gl:use-program (id text-program))
       (gl:uniform-matrix-4fv (get-uniform text-program "projection") proj nil))))
 
+(defun init-entities ()
+  (iter (for i from 0 below 50)
+    (let* ((lo (car *boundary*))
+           (hi (cdr *boundary*))
+           (size (vec3 1.0 1.0 1.0))
+           (pos (vec3 (random-in-range lo (- hi (x-val size)))
+                      (random-in-range (+ lo (y-val size)) hi)
+                      (random-in-range lo (- hi (z-val size)))))
+           (vel (vec3 (random-in-range -10.0 10.0)
+                      (random-in-range -10.0 10.0)
+                      (random-in-range -10.0 10.0)))
+           (accel (vec3 0.0 0.0 0.0)))
+      (add-entity (map (:position pos)
+                       (:size size)
+                       (:vel vel)
+                       (:accel accel))))))
+
+(defun flock-init ()
+  (init-shaders)
+  (init-entities))
+
 (defun flock-handle-input ()
   (when (key-pressed-p :escape)
-    (close-window)))
+    (close-window))
+  (when (key-action-p :r :press)
+    (initialize-globals)
+    (flock-init))
+
+  (when (key-action-p :space :press)
+    (setf *move-camera?* (not *move-camera?*)))
+
+  (when *move-camera?*
+    (when *cursor-callback-p*
+      (let ((x-offset (cfloat (- *cursor-x* *last-x*)))
+            (y-offset (cfloat (- *cursor-y* *last-y*))))
+        (process-rotation-movement *camera* x-offset y-offset)))
+
+    (when *scroll-callback-p*
+      (process-scroll-movement *camera* (cfloat *scroll-y*))) 
+
+    (when (key-pressed-p :w)
+      (process-direction-movement *camera* +forward+ *dt*))
+    (when (key-pressed-p :s)
+      (process-direction-movement *camera* +backward+ *dt*))
+    (when (key-pressed-p :a)
+      (process-direction-movement *camera* +left+ *dt*))
+    (when (key-pressed-p :d)
+      (process-direction-movement *camera* +right+ *dt*))
+
+    (let ((program (get-program "cube"))
+          (view (get-view-matrix *camera*))
+          (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
+                                            (cfloat (/ *width* *height*))
+                                            0.1 100.0)))
+      (gl:use-program (id program))
+      (gl:uniform-matrix-4fv (get-uniform program "view") view nil)
+      (gl:uniform-matrix-4fv (get-uniform program "projection") proj nil)))
+
+  (setf *last-x* *cursor-x*
+        *last-y* *cursor-y*)
+  (setf *cursor-callback-p* nil
+        *scroll-callback-p* nil))
+
 
 (defun flock-render ()
   (gl:enable :blend :depth-test)
@@ -57,11 +124,22 @@
   (gl:blend-func :src-alpha :one-minus-src-alpha)
   (gl:clear-color 0.0 0.0 0.0 1.0)
   (gl:clear :color-buffer-bit :depth-buffer-bit)
-  (cube-draw :position (vec3 0.0 0.0 -10.0)
+
+  (cube-draw :position (vec3 0.0 0.0 10.0)
              :color (vec4 0.0 0.4 0.2 1.0)
-             :rotate (vec3 0.4 0.4 0.0))
-  (text-draw "testing" (get-font "sans24")
-             :position (vec3 200.0 200.0 0.0)))
+             :rotate (vec3 0.0 0.0 0.0))
+
+  ;; draw entities
+  (do-map (id comps *entities*)
+    (declare (ignore id))
+    (cube-draw :position (@ comps :position)
+               :size (@ comps :size)))
+
+  ;; fps
+  (text-draw (format nil "~4f" (cfloat (average-fps)))
+             (get-font "sans24")
+             :position (vec2 1.0 3.0)
+             :scale (vec2 0.7 0.7)))
 
 (defun flock-update ())
 (defun flock-cleanup-code ())
