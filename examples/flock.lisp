@@ -145,6 +145,21 @@
 
 (defglobal *move-timer* (make-timer))
 (defglobal *move-timestep* (/ 1.0 60.0))
+
+(declaim (ftype (function (vec3 vec3) vec3) vec3-to))
+(defun vec3-to (a b)
+  "vector from a to b"
+  (declare (optimize (speed 3) (safety 0)))
+  (kit.glm:vec- b a))
+
+(declaim (ftype (function (vec3 vec3) single-float) vec3-distance))
+(defun vec3-distance (a b)
+  (declare (optimize (speed 3) (safety 0)))
+  (cfloat (sqrt (iter (for (the single-float p) in-vector (vec3-to a b))
+                  (sum p into d)
+                  (declare (single-float d))
+                  (finally (return d))))))
+
 (defun flock-update ()
   (timer-update *move-timer*)
   (iter (while (>= (timer-time *move-timer*) *move-timestep*))
@@ -152,6 +167,32 @@
       ;; seperation
       ;; alignment
       ;; cohesion
+
+      (let ((n-proximity 0)
+            (seperate-vec (vec3 0.0 0.0 0.0))
+            (align-vec (vec3 0.0 0.0 0.0))
+            (cohesion-vec (vec3 0.0 0.0 0.0))
+            (max-accel-mag 100.0)
+            (pos (@ comps :pos)))
+        (do-map (oid ocomps *entities*)
+          (unless (= id oid)
+            (let ((opos (@ ocomps :pos))
+                  (ovel (@ ocomps :vel)))
+              (when (< (vec3-distance pos opos)
+                       10.0)
+                (incf n-proximity)
+                (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3-to pos opos))
+                      align-vec (kit.glm:vec+ align-vec ovel)
+                      cohesion-vec (kit.glm:vec+ cohesion-vec opos))))))
+        (setf
+         ;; opposite of average direction towards others
+         seperate-vec (kit.glm:vec* seperate-vec -1.0)
+
+         ;; average velocity of others
+         align-vec (kit.glm:vec/ align-vec n-proximity)
+
+         ;; vector to average position of others
+         cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec n-proximity))))
 
       ;;sympletic euler integration
       (add-event
