@@ -7,7 +7,7 @@
 3. cohesion - move towards average position of members
 |#
 
-(defglobal *boundary* (cons -50.0 50.0))
+(defglobal *boundary* (cons -20.0 20.0))
 (defglobal *move-camera?* t)
 
 (defun init-managers ()
@@ -172,14 +172,16 @@
             (seperate-vec (vec3 0.0 0.0 0.0))
             (align-vec (vec3 0.0 0.0 0.0))
             (cohesion-vec (vec3 0.0 0.0 0.0))
-            (max-accel-mag 100.0)
-            (pos (@ comps :pos)))
+            (max-accel-mag 20.0)
+            (pos (@ comps :pos))
+            ;; (accel (@ comps :accel))
+            )
         (do-map (oid ocomps *entities*)
           (unless (= id oid)
             (let ((opos (@ ocomps :pos))
                   (ovel (@ ocomps :vel)))
               (when (< (vec3-distance pos opos)
-                       10.0)
+                       15.0)
                 (incf n-proximity)
                 (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3-to pos opos))
                       align-vec (kit.glm:vec+ align-vec ovel)
@@ -187,12 +189,28 @@
         (setf
          ;; opposite of average direction towards others
          seperate-vec (kit.glm:vec* seperate-vec -1.0)
+         seperate-vec (kit.glm:normalize seperate-vec)
+         seperate-vec (kit.glm:vec* seperate-vec (* max-accel-mag 0.1))
 
          ;; average velocity of others
-         align-vec (kit.glm:vec/ align-vec n-proximity)
+         align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
+         align-vec (kit.glm:normalize seperate-vec)
+         align-vec (kit.glm:vec* align-vec (* max-accel-mag 1.0))
 
          ;; vector to average position of others
-         cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec n-proximity))))
+         cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
+         cohesion-vec (kit.glm:normalize cohesion-vec)
+         cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 0.45)))
+
+        (when (> n-proximity 0)
+          (add-event
+           :code
+           (with! *entities* id
+                  (with (@ *entities* id)
+                        :accel
+                        (kit.glm:vec+ cohesion-vec
+                                      (kit.glm:vec+ seperate-vec
+                                                    align-vec)))))))
 
       ;;sympletic euler integration
       (add-event
@@ -200,32 +218,43 @@
        ;; v += a/2 * dt
        ;; p += v * dt
        ;; v += a/2 * dt
-       (let* ((pos (@ comps :pos))
-              (vel (@ comps :vel))
-              (accel (@ comps :accel))
+       (let* ((components (@ *entities* id))
+              (pos (@ components :pos))
+              (vel (@ components :vel))
+              (accel (@ components :accel))
+              (max-vel-mag 10.0)
               (a/2 (kit.glm:vec* accel (* 0.5 *move-timestep*))))
          (with! *entities* id
-                (-> comps
+                (-> components
                     (with :vel (kit.glm:vec+ vel a/2))
                     (with :pos (kit.glm:vec+
                                 pos (kit.glm:vec* vel *move-timestep*)))
-                    (with :vel (kit.glm:vec+ vel a/2))))))
+                    (with :vel (let ((new-vel (kit.glm:vec+ vel a/2)))
+                                 (if (< max-vel-mag (kit.glm:vec-length new-vel))
+                                     (kit.glm:vec* (kit.glm:normalize new-vel) max-vel-mag)
+                                     new-vel)))))))
       ;; move to opposite side if out of bounds
+
       (add-event
        :code
-       (let* ((pos (@ comps :pos))
+       (let* ((components (@ *entities* id))
+              (pos (@ components :pos))
+              (vel (@ components :vel))
               (pos-copy (copy-seq pos))
+              (vel-copy (copy-seq vel))
               (min-bound (car *boundary*))
               (max-bound (cdr *boundary*)))
          (iter (for p in-vector pos)
+           (for v in-vector vel)
            (for i from 0)
            (cond ((< p min-bound)
-                  (setf (aref pos-copy i) max-bound)
-                  (with! *entities* id (with comps :pos pos-copy)))
+                  (setf (aref pos-copy i) max-bound
+                        (aref vel-copy i) (- v))
+                  ;; (with! *entities* id (with components :pos pos-copy))
+                  (with! *entities* id (with components :vel vel-copy)))
                  ((> p max-bound)
                   (setf (aref pos-copy i) min-bound)
-                  (with! *entities* id
-                         (with comps :pos pos-copy))))))))
+                  (with! *entities* id (with components :pos pos-copy))))))))
 
     (decf (timer-time *move-timer*) *move-timestep*)))
 
