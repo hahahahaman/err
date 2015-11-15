@@ -7,7 +7,7 @@
 3. cohesion - move towards average position of members
 |#
 
-(defglobal *boundary* (cons -20.0 20.0))
+(defglobal *boundary* (cons -50.0 50.0))
 (defglobal *move-camera?* t)
 
 (defun init-managers ()
@@ -30,7 +30,7 @@
     (init-managers)
     (setf *text-drawer* (make-instance 'text-drawer :program text-program)
           *cube-drawer* (make-instance 'cube-drawer :program cube-program)
-          *camera* (make-instance 'camera :position (vec3 0.0 0.0 20.0)))
+          *camera* (make-instance 'camera :position (vec3 0.0 0.0 50.0)))
 
     (load-program "text" text-program)
     (load-program "cube" cube-program)
@@ -42,7 +42,7 @@
           (proj (kit.glm:perspective-matrix
                  (kit.glm:deg-to-rad (zoom *camera*))
                  (cfloat (/ *width* *height*))
-                 0.1 100.0)))
+                 0.1 1000.0)))
       (gl:use-program (id cube-program))
       (gl:uniform-matrix-4fv (get-uniform cube-program "view") view nil)
       (gl:uniform-matrix-4fv (get-uniform cube-program "projection") proj nil))
@@ -59,14 +59,16 @@
     (let* ((lo (car *boundary*))
            (hi (cdr *boundary*))
            (size (vec3 1.0 1.0 1.0))
+           (vel-range 10.0)
+           (neg-vel-range (- vel-range))
            (pos (vec3 (random-in-range lo (- hi (x-val size)))
                       (random-in-range (+ lo (y-val size)) hi)
                       (random-in-range lo (- hi (z-val size)))))
-           (vel (vec3 (random-in-range -10.0 10.0)
-                      (random-in-range -10.0 10.0)
-                      (random-in-range -10.0 10.0)))
+           (vel (vec3 (random-in-range neg-vel-range vel-range)
+                      (random-in-range neg-vel-range vel-range)
+                      (random-in-range neg-vel-range vel-range)))
            (accel (vec3 0.0 0.0 0.0)))
-      (add-entity (map (:position pos)
+      (add-entity (map (:pos pos)
                        (:size size)
                        (:vel vel)
                        (:accel accel))))))
@@ -88,7 +90,7 @@
   (when *move-camera?*
     (when *cursor-callback-p*
       (let ((x-offset (cfloat (- *cursor-x* *last-x*)))
-            (y-offset (cfloat (- *cursor-y* *last-y*))))
+            (y-offset (cfloat (- *last-y* *cursor-y*))))
         (process-rotation-movement *camera* x-offset y-offset)))
 
     (when *scroll-callback-p*
@@ -107,7 +109,7 @@
           (view (get-view-matrix *camera*))
           (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
                                             (cfloat (/ *width* *height*))
-                                            0.1 100.0)))
+                                            0.1 1000.0)))
       (gl:use-program (id program))
       (gl:uniform-matrix-4fv (get-uniform program "view") view nil)
       (gl:uniform-matrix-4fv (get-uniform program "projection") proj nil)))
@@ -132,7 +134,7 @@
   ;; draw entities
   (do-map (id comps *entities*)
     (declare (ignore id))
-    (cube-draw :position (@ comps :position)
+    (cube-draw :position (@ comps :pos)
                :size (@ comps :size)))
 
   ;; fps
@@ -141,7 +143,51 @@
              :position (vec2 1.0 3.0)
              :scale (vec2 0.7 0.7)))
 
-(defun flock-update ())
+(defglobal *move-timer* (make-timer))
+(defglobal *move-timestep* (/ 1.0 60.0))
+(defun flock-update ()
+  (timer-update *move-timer*)
+  (iter (while (>= (timer-time *move-timer*) *move-timestep*))
+    (do-map (id comps *entities*)
+      ;; seperation
+      ;; alignment
+      ;; cohesion
+
+      ;;sympletic euler integration
+      (add-event
+       :code
+       ;; v += a/2 * dt
+       ;; p += v * dt
+       ;; v += a/2 * dt
+       (let* ((pos (@ comps :pos))
+              (vel (@ comps :vel))
+              (accel (@ comps :accel))
+              (a/2 (kit.glm:vec* accel (* 0.5 *move-timestep*))))
+         (with! *entities* id
+                (-> comps
+                    (with :vel (kit.glm:vec+ vel a/2))
+                    (with :pos (kit.glm:vec+
+                                pos (kit.glm:vec* vel *move-timestep*)))
+                    (with :vel (kit.glm:vec+ vel a/2))))))
+      ;; move to opposite side if out of bounds
+      (add-event
+       :code
+       (let* ((pos (@ comps :pos))
+              (pos-copy (copy-seq pos))
+              (min-bound (car *boundary*))
+              (max-bound (cdr *boundary*)))
+         (iter (for p in-vector pos)
+           (for i from 0)
+           (cond ((< p min-bound)
+                  (setf (aref pos-copy i) max-bound)
+                  (with! *entities* id (with comps :pos pos-copy)))
+                 ((> p max-bound)
+                  (setf (aref pos-copy i) min-bound)
+                  (with! *entities* id
+                         (with comps :pos pos-copy))))))))
+
+    (decf (timer-time *move-timer*) *move-timestep*)))
+
 (defun flock-cleanup-code ())
 
 (defmacro start-flock ()
