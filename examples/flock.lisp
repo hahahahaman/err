@@ -55,24 +55,28 @@
       (gl:use-program (id text-program))
       (gl:uniform-matrix-4fv (get-uniform text-program "projection") proj nil))))
 
+(defun create-boid ()
+  (let* ((lo (car *boundary*))
+         (hi (cdr *boundary*))
+         (size (vec3 1.0 1.0 1.0))
+         (vel-range 10.0)
+         (neg-vel-range (- vel-range))
+         (pos (vec3 (random-in-range lo hi)
+                    (random-in-range lo hi)
+                    (random-in-range lo hi)))
+         (vel (vec3 (random-in-range neg-vel-range vel-range)
+                    (random-in-range neg-vel-range vel-range)
+                    (random-in-range neg-vel-range vel-range)))
+         (accel (vec3 0.0 0.0 0.0)))
+    (add-entity (map (:pos pos)
+                     (:size size)
+                     (:vel vel)
+                     (:accel accel)
+                     (:n-proxy 0)))))
+
 (defun init-entities ()
-  (iter (for i from 0 below 100)
-    (let* ((lo (car *boundary*))
-           (hi (cdr *boundary*))
-           (size (vec3 1.0 1.0 1.0))
-           (vel-range 10.0)
-           (neg-vel-range (- vel-range))
-           (pos (vec3 (random-in-range lo (- hi (x-val size)))
-                      (random-in-range (+ lo (y-val size)) hi)
-                      (random-in-range lo (- hi (z-val size)))))
-           (vel (vec3 (random-in-range neg-vel-range vel-range)
-                      (random-in-range neg-vel-range vel-range)
-                      (random-in-range neg-vel-range vel-range)))
-           (accel (vec3 0.0 0.0 0.0)))
-      (add-entity (map (:pos pos)
-                       (:size size)
-                       (:vel vel)
-                       (:accel accel))))))
+  (iter (for i from 0 below 70)
+    (create-boid)))
 
 (defun flock-init ()
   (init-shaders)
@@ -161,11 +165,12 @@
 (defun flock-update ()
   (timer-update *move-timer*)
   (iter (while (>= (timer-time *move-timer*) *move-timestep*))
-    ;; FIXME : add all events into one event
     (let ((boid-vecs (make-array 0 :element-type 'vec3
                                    :fill-pointer 0
                                    :adjustable t))
-          (boid-counter 0))
+          (boid-counter 0)
+          (max-accel-mag 20.0)
+          (max-vel-mag 10.0))
       (do-map (id comps *entities*)
         ;; seperation
         ;; alignment
@@ -175,11 +180,10 @@
               (seperate-vec (vec3 0.0 0.0 0.0))
               (align-vec (vec3 0.0 0.0 0.0))
               (cohesion-vec (vec3 0.0 0.0 0.0))
-              (max-accel-mag 8.0)
               (pos (@ comps :pos))
               ;; (accel (@ comps :accel))
               (short-range-sense 3.0)
-              (long-range-sense 7.0))
+              (long-range-sense 10.0))
 
           ;; find nearby boids and get basic behaviour vectors
           (do-map (oid ocomps *entities*)
@@ -200,12 +204,12 @@
            ;; average velocity of others
            align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
            align-vec (kit.glm:normalize seperate-vec)
-           align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.2))
+           align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.34))
 
            ;; vector to average position of others
            cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
            cohesion-vec (kit.glm:normalize cohesion-vec)
-           cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 0.7)))
+           cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 0.75)))
 
           (vector-push-extend (if (> n-proximity 0)
                                   (kit.glm:vec+ cohesion-vec
@@ -220,7 +224,6 @@
          (let* ((pos (@ components :pos))
                 (vel (@ components :vel))
                 (accel (@ components :accel))
-                (max-vel-mag 15.0)
                 (a/2 (kit.glm:vec* accel (* 0.5 *move-timestep*)))
                 (min-bound (car *boundary*))
                 (max-bound (cdr *boundary*)))
