@@ -183,7 +183,7 @@
               (pos (@ comps :pos))
               ;; (accel (@ comps :accel))
               (short-range-sense 3.0)
-              (long-range-sense 10.0))
+              (long-range-sense 8.0))
 
           ;; find nearby boids and get basic behaviour vectors
           (do-map (oid ocomps *entities*)
@@ -204,12 +204,12 @@
            ;; average velocity of others
            align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
            align-vec (kit.glm:normalize seperate-vec)
-           align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.34))
+           align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.15))
 
            ;; vector to average position of others
            cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
            cohesion-vec (kit.glm:normalize cohesion-vec)
-           cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 0.75)))
+           cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 1.09)))
 
           (vector-push-extend (if (> n-proximity 0)
                                   (kit.glm:vec+ cohesion-vec
