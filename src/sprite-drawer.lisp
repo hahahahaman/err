@@ -1,7 +1,11 @@
 (in-package :err)
 
 (defclass sprite-drawer (drawer)
-  ())
+  ((current-texture-id
+    :accessor current-texture-id
+    :initarg :current-texture-id))
+  (:default-initargs
+   :current-texture-id nil))
 
 (defmethod initialize-instance :after ((drawer sprite-drawer) &key)
   (with-slots (vao) drawer
@@ -38,7 +42,7 @@
                       (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
                       (rotate 0.0)
                       (drawer *sprite-drawer*))
-  (with-accessors ((program program) (vao vao)) drawer
+  (with-slots (program vao current-texture-id) drawer
     (use program)
 
     (gl:uniformfv (get-uniform program "spriteColor") color)
@@ -64,11 +68,14 @@
       (gl:uniform-matrix-4fv (get-uniform program "model") (vector model) nil))
 
     ;; bind TEXTURE2D
-    (gl:active-texture :texture0)
-    (gl:bind-texture :texture-2d (id texture2d))
+    (unless (eql (id texture2d) current-texture-id)
+      (gl:active-texture :texture0)
+      (gl:bind-texture :texture-2d (id texture2d))
+      (setf current-texture-id (id texture2d)))
 
     ;; draw
     (gl:bind-vertex-array vao)
     (gl:draw-arrays :triangle-strip 0 4)
     (gl:bind-vertex-array 0)
-    (gl:bind-texture :texture-2d 0)))
+    ;; (gl:bind-texture :texture-2d 0)
+    ))
