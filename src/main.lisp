@@ -7,6 +7,8 @@
                  render-code
                  update-code
                  cleanup-code)
+  "This represents a useful pattern that describes a generic game loop written
+with err."
   `(block nil
      (glfw:with-init-window (:title ,title
                              :width *width*
@@ -31,7 +33,7 @@
        (initialize-globals)
        ,init-code
 
-    ;;; glfw input
+       ;;; glfw input
        (glfw:set-key-callback 'key-callback)
        (glfw:set-mouse-button-callback 'mouse-callback)
        (glfw:set-cursor-position-callback 'cursor-callback)

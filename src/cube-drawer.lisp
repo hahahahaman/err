@@ -29,8 +29,8 @@
 
     (let ((model (kit.glm:matrix*
                   (kit.glm:translate position)
-                  (kit.glm:scale size)
-                  (kit.glm:rotate rotate))))
+                  (kit.glm:rotate rotate)
+                  (kit.glm:scale size))))
       (gl:uniform-matrix-4fv (get-uniform program "model")
                              model
                              nil)
