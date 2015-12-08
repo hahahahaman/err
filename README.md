@@ -40,20 +40,41 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   * [iterate](https://common-lisp.net/project/iterate/)
   * [cl-glfw3](https://github.com/AlexCharlton/cl-glfw3)
   * [cl-opengl](https://github.com/3b/cl-opengl)
-  * [cl-soil](https://github.com/cbaggers/cl-soil)
   * [cl-freetype2](https://github.com/rpav/cl-freetype2)
-  * [glkit](https://github.com/lispgames/glkit)
   * [fest](https://github.com/slburson/fset)
   * [defenum](http://defenum.sourceforge.net/)
   * [ironclad](http://method-combination.net/lisp/ironclad/)
   * swank (part of [slime](https://common-lisp.net/project/slime/))
 
-3. clone this project somewhere:
+   Not in quicklisp (get from their repositories):
+      * [glkit](https://github.com/lispgames/glkit)
+      * [cl-soil](https://github.com/cbaggers/cl-soil)
+
+3. clone this project into the quicklisp/local-projects/ (by default in your
+   user home folder):
 
   ```
-  git clone https://github.com/hahahahaman/err
+  $ cd ~/quickload/local-projects/
+
+  $ git clone https://github.com/hahahahaman/err
   ```
-4. launch Common Lisp, add project to asdf, and load err:
+
+  Something I like to do instead of step 4 is clone the project into
+  ~/quicklisp/local-projects/ then
+4. add ASD project file
+
+  Add the relative path of the asd file into system-index.txt (also in the
+  local-projects folder):
+
+  ```
+  err/err.asd
+
+  err/err-examples.asd
+  ```
+
+  OR
+
+  launch Common Lisp, add project to asdf, and load err:
 
   ```lisp
   $ sbcl
@@ -63,4 +84,7 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   * (ql:quickload :err)
   ```
 
-Alternatives to step 4 can be found [here](http://stackoverflow.com/questions/11261045/how-to-add-a-local-project-to-asdf-configured-by-quicklisp).
+  OR
+
+  more ways found
+  [here](http://stackoverflow.com/questions/11261045/how-to-add-a-local-project-to-asdf-configured-by-quicklisp).
