@@ -40,6 +40,7 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   * [iterate](https://common-lisp.net/project/iterate/)
   * [cl-glfw3](https://github.com/AlexCharlton/cl-glfw3)
   * [cl-opengl](https://github.com/3b/cl-opengl)
+  * [glkit](https://github.com/lispgames/glkit)
   * [cl-freetype2](https://github.com/rpav/cl-freetype2)
   * [fest](https://github.com/slburson/fset)
   * [defenum](http://defenum.sourceforge.net/)
@@ -47,7 +48,6 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   * swank (part of [slime](https://common-lisp.net/project/slime/))
 
    Not in quicklisp (get from their repositories):
-      * [glkit](https://github.com/lispgames/glkit)
       * [cl-soil](https://github.com/cbaggers/cl-soil)
 
 3. clone this project into the quicklisp/local-projects/ (by default in your
