@@ -8,4 +8,5 @@
   :serial t
   :components ((:module examples
                 :components ((:file "package")
-                             (:file "flock")))))
+                             (:file "flock")
+                             (:file "platformer")))))
