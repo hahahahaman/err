@@ -2,8 +2,8 @@
 
 (defstruct text-char
   (texture-id 0 :type fixnum)
-  (size (ivec2 0 0) :type ivec2)
-  (bearing (ivec2 0 0) :type ivec2)
+  (size (vec2i 0 0) :type vec2i)
+  (bearing (vec2i 0 0) :type vec2i)
   (advance 0.0 :type single-float))
 
 (defclass text-drawer (drawer)

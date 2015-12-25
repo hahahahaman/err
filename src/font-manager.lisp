@@ -37,8 +37,8 @@
 
             (with! text-chars (code-char c)
                    (make-text-char :texture-id texture
-                                   :size (ivec2 width rows)
-                                   :bearing (ivec2 left top)
+                                   :size (vec2i width rows)
+                                   :bearing (vec2i left top)
                                    :advance advance)))))
       (gl:bind-texture :texture-2d 0)
 

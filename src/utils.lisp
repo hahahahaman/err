@@ -116,117 +116,6 @@ Remember to free gl-array afterwards."
   "Multiply sizeof TYPE, by MULTIPLE"
   (* (sizeof type) multiple))
 
-;;;;;;;;;;;
-;; vectors
-;;;;;;;;;;;
-
-;; code from mathkit
-(defmacro define-vecn (n type &optional (prefix ""))
-  (let ((vecn (alexandria:symbolicate (string-upcase prefix)
-                                      'vec (format nil "~A" n))))
-    `(progn
-       (deftype ,vecn () '(simple-array ,type (,n)))
-       (defun ,vecn (a &rest r)
-         (etypecase a
-           (vector
-            (cond
-              ((= (length a) ,n) a)
-              ((> (length a) ,n)
-               (let ((a+ (make-array ,n :element-type ',type)))
-                 (replace a+ a)
-                 a+))
-              (t (let* ((a+ (make-array ,n :element-type ',type)))
-                   (replace a+ a)
-                   (replace a+ r :start1 (length a))
-                   a+))))
-           (,type
-            (let* ((a+ (make-array ,n :element-type ',type)))
-              (setf (aref a+ 0) a)
-              (replace a+ r :start1 1)
-              a+)))))))
-
-(define-vecn 2 integer "i")
-(define-vecn 3 integer "i")
-(define-vecn 4 integer "i")
-
-#|
-(defmacro define-vec-op (name func &rest args)
-  `(defun ,name (,@args)
-     (cl:map (type-of ,(car args))
-             ,func
-             ,@args)))
-|#
-
-(defun vec-add (v1 v2)
-  ;; (declare (optimize (speed 3) (safety 0)))
-  "Returns a vector of the same type as V1, which is a component-wise sum of
-V1 and V2."
-  (cl:map (type-of v1) #'+ v1 v2))
-
-(defun vec-mul (v1 f)
-  "Returns a vector with the same type as V1, which has components multiplied by F."
-  (cl:map (type-of v1)
-          (lambda (x) (* (the single-float x) (the single-float f)))
-          v1))
-
-(defun vec-div (v1 f)
-  (vec-mul v1 (/ 1.0 f)))
-
-(defun vec-length (v)
-  (sqrt (reduce #'+ (cl:map (type-of v) #'square v))))
-
-(defun clamp (value low high)
-  (declare (optimize (speed 3) (safety 0)))
-  (min high (max low value)))
-
-(declaim (ftype (function (single-float single-float single-float) single-float) sfclamp))
-(defun sfclamp (value low high)
-  (declare (optimize (speed 3) (safety 0)))
-  (min high (max low value)))
-
-(defun vec-clamp (value low high)
-  (cl:map (type-of value) #'sfclamp value low high))
-
-(declaim (ftype (function (vec2 vec2) vec2) vec2-add))
-(defun vec2-add (v1 v2)
-  (declare (optimize (speed 3) (safety 0)))
-  (cl:map 'vec2 #'+ v1 v2))
-
-(declaim (ftype (function (vec2 single-float) vec2) vec2-mul))
-(defun vec2-mul (v1 f)
-  (declare (optimize (speed 3) (safety 0)))
-  (cl:map 'vec2 (lambda (x) (* x f)) v1))
-
-(declaim (ftype (function (vec2 single-float) vec2) vec2-div))
-(defun vec2-div (v1 f)
-  (vec2-mul v1 (/ 1.0 f)))
-
-(declaim (ftype (function (vec2 vec2) vec2) vec2-add))
-(defun vec2-sub (v1 v2)
-  (declare (optimize (speed 3) (safety 0)))
-  (cl:map 'vec2 #'+ (the vec2 v1) (vec2-mul v2 -1.0)))
-
-(declaim (ftype (function (vec2 vec2 vec2) vec2) vec2-clamp))
-(defun vec2-clamp (value low high)
-  (declare (optimize (speed 3) (safety 0)))
-  (cl:map 'vec2 #'sfclamp value low high))
-
-(defun x-val (vec)
-  (aref vec 0))
-(defun y-val (vec)
-  (aref vec 1))
-(defun z-val (vec)
-  (aref vec 2))
-(defun w-val (vec)
-  (aref vec 3))
-
-(defun (setf x-val) (value vec)
-  (setf (aref vec 0) value))
-(defun (setf y-val) (value vec)
-  (setf (aref vec 1) value))
-(defun (setf z-val) (value vec)
-  (setf (aref vec 2) value))
-
 ;;; slots
 
 (defmacro get-slot (object &rest nested-slot-names)
@@ -249,8 +138,8 @@ V1 and V2."
 ;;; swank stuff
 
 (defmacro continuable (&body body)
-  "Helper macro that we can use to allow us to continue from an
-  error. Remember to hit C in slime or pick the restart so errors don't kill the app."
+  "Helper macro that we can use to allow us to continue from an error. Remember
+  to hit C in slime or pick the restart so errors don't kill the app."
   `(restart-case
        (progn ,@body) (continue () :report "Continue")))
 
@@ -343,6 +232,7 @@ V1 and V2."
 ;;; build file
 ;;;
 
+;; TODO
 ;; (defun make-build-file (path entry &key system output))
 
 ;;;
@@ -350,11 +240,15 @@ V1 and V2."
 ;;;
 
 (defun md5 (str)
+  "=> CHECKSUM
+Returns the md5 checksum of STR."
   (ironclad:byte-array-to-hex-string
    (ironclad:digest-sequence :md5 
                              (ironclad:ascii-string-to-byte-array str))))
-(defun valid-md5? (checksum str)
-  (string= checksum (md5 str)))
+(defun valid-checksum-p (checksum other-checksum)
+  "=> BOOLEAN
+Checks if two checksums are equal."
+  (string= checksum other-checksum))
 
 ;;;
 ;;; some math
