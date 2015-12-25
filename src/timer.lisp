@@ -4,7 +4,7 @@
   (end 1.0 :type real)
   (time 0.0 :type real))
 
-(defmethod timer-ended? ((timer timer))
+(defmethod timer-ended-p ((timer timer))
   (>= (timer-time timer) (timer-end timer)))
 
 (defmethod timer-update ((timer timer))
