@@ -21,6 +21,7 @@
                 :components ((:file "package")
                              (:file "globals")
                              (:file "timer")
+                             (:file "vec")
                              (:file "utils")
                              (:file "time-travel")
                              (:file "file-tracker")

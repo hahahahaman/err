@@ -122,3 +122,8 @@ file tracking
 for when creating an executable
 |#
 (defglobal *executable* nil)
+
+#|
+keep track of vec types that have been defined
+|#
+(defparameter *vec-types* '())
