@@ -1,8 +1,34 @@
 (in-package :err-examples)
 
-(defun platformer-init ())
+(defglobal *platformer-level* (empty-map))
 
-(defun platformer-handle-input ())
+(defun rect-collide-p (x y w h ox oy ow oh)
+  "Rectangle collision check based on bottom left position of the rectangle."
+  (not (or (< (+ ox ow) x)
+           (> ox (+ x w))
+           (< oy (- y h))
+           (> (- oy oh) y))))
+
+(defun platformer-init ()
+  (init-shaders)
+
+  ;;platforms
+  (setf *platformer-level* (with *platformer-level* (map (:x 0.0)
+                                                         (:y 0.0)
+                                                         (:w 100)
+                                                         (:h 100))))
+
+  ;; player
+  (add-entity (map (:x 32.0)
+                   (:y 32.0)
+                   (:w 32)
+                   (:h 32)
+                   (:velx 0.0)
+                   (:vely 0.0))))
+
+(defun platformer-handle-input ()
+  (when (key-action-p :escape :press)
+    (glfw:set-window-should-close)))
 
 (defun platformer-update ())
 
@@ -10,7 +36,7 @@
 
 (defun platformer-cleanup ())
 
-(defmacro platfomer-start ()
+(defmacro platformer-start ()
   `(err:run "platformer"
             :init-code (platformer-init)
             :input-code (platformer-handle-input)
@@ -19,4 +45,4 @@
             :cleanup-code (platformer-cleanup)))
 
 (defun platformer ()
-  )
+  (platformer-start))
