@@ -27,12 +27,12 @@
       (gl:delete-buffers buffers))))
 
 (defun rect-draw (&key
-                    (position (vec3 0.0 0.0 0.0))
-                    (size (vec2 10.0 10.0))
-                    (color (vec4 1.0 1.0 1.0 1.0))
+                    (position (vec3f 0.0 0.0 0.0))
+                    (size (vec2f 10.0 10.0))
+                    (color (vec4f 1.0 1.0 1.0 1.0))
                     (rotate 0.0)
-                    (rotation-center (vec3 0.0 0.0 0.0))
-                    (draw-center (vec3 0.0 0.0 0.0))
+                    (rotation-center (vec3f 0.0 0.0 0.0))
+                    (draw-center (vec3f 0.0 0.0 0.0))
                     (draw-mode :triangle-strip)
                     (drawer *rect-drawer*))
   "Draws a rectangle on screen.
@@ -42,8 +42,8 @@ COLOR is a vec4 of RGBA.
 ROTATE is the angle in radians of rotation around the rotation center.
 ROTATION-CENTER is the point from which rotation occurs relative to the object,
 so -0.5,-0.5, 0.0 means rotate from the bottom left of the rect.
-DRAW-CENTER is the point from which drawing occurs, relative to the object,
-so -0.5, 0.5, 0.0 means draw from the top left of the rect.
+DRAW-CENTER is the point from which drawing occurs relative to the object.
+So, -0.5, 0.5, 0.0 means draw from the top left of the rect.
 DRAW-MODE is the gl mode to draw the rect.
 DRAWER is a rect-drawer object that by default is the global rect-drawer."
 
