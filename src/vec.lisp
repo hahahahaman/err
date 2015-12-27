@@ -128,6 +128,10 @@
 (define-vecn 3 single-float "f")
 (define-vecn 4 single-float "f")
 
+(define-vecn 2 double-float "d")
+(define-vecn 3 double-float "d")
+(define-vecn 4 double-float "d")
+
 #|
 (defmacro define-vec-op (name func &rest args)
   `(defun ,name (,@args)
