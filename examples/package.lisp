@@ -17,4 +17,6 @@
                           #:substitute #:substitute-if #:substitute-if-not
                           #:some #:every #:notany #:notevery
                           #:with)
-  (:export :flock))
+  (:export #:flock
+           #:platformer
+           #:pong))
