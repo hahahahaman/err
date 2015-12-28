@@ -18,9 +18,10 @@
                             :initial-element (/ 1.0d0 +max-fps+)))
        (sample-index 0))
   (defun average-fps ()
+    "=> FLOAT
+Average time change over a few hundred frames."
     (setf (aref samples sample-index) *dt*
           sample-index (mod (1+ sample-index) max-samples))
-    ;; (print *dt*)
     (/ max-samples (reduce #'+ samples))))
 
 (defun cap-fps ()
@@ -51,7 +52,7 @@
         *cursor-callback-p* nil))
 
 (defun update-globals ()
-  "A single function that encompasses global updates"
+  "A single function that encompasses global updates."
   (clear-actions)
   (update-dt)
   (cap-fps))
@@ -99,7 +100,7 @@ Remember to free gl-array afterwards."
      (gl:free-gl-array ,var)))
 
 (defun random-in-range (start end)
-  "Random number between start and end inclusive."
+  "Random number between start and end, inclusive."
   (+ start (random (- (1+ end) start))))
 
 (declaim (ftype (function (real) single-float) cfloat))
@@ -109,16 +110,17 @@ Remember to free gl-array afterwards."
   (coerce n 'single-float))
 
 (defun sizeof (type)
-  "Gives to foreign-type-size of TYPE. Used with cffi stuff, like opengl."
+  "Gives to foreign-type-size of TYPE. Used with cffi stuff, like cl-opengl."
   (cffi-sys:%foreign-type-size type))
 
 (defun sizeof* (type multiple)
-  "Multiply sizeof TYPE, by MULTIPLE"
+  "Multiply sizeof TYPE by MULTIPLE"
   (* (sizeof type) multiple))
 
 ;;; slots
 
 (defmacro get-slot (object &rest nested-slot-names)
+  "Returns a nested slot-value form."
   (iter (iter:with current = object)
     (for s in nested-slot-names)
     (setf current `(slot-value ,current ,s))
@@ -139,17 +141,18 @@ Remember to free gl-array afterwards."
 
 (defmacro continuable (&body body)
   "Helper macro that we can use to allow us to continue from an error. Remember
-  to hit C in slime or pick the restart so errors don't kill the app."
+  to hit C (for continue) in slime or pick the restart so errors don't kill the
+  app."
   `(restart-case
        (progn ,@body) (continue () :report "Continue")))
 
 (defun update-swank ()
   (ignore-errors
-   "Called from within the main loop, this keep the lisp repl running"
+   "Called from within the main loop, this keep the lisp repl running."
    (continuable
-    (let ((connection (or swank::*emacs-connection* (swank::default-connection))))
-      (when connection
-        (swank::handle-requests connection t))))))
+     (let ((connection (or swank::*emacs-connection* (swank::default-connection))))
+       (when connection
+         (swank::handle-requests connection t))))))
 
 ;; copy instances
 

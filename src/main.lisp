@@ -7,8 +7,7 @@
                  render-code
                  update-code
                  cleanup-code)
-  "This represents a useful pattern that describes a generic game loop written
-with err."
+  "Generic game loop code."
   `(block nil
      (glfw:with-init-window (:title ,title
                              :width *width*
