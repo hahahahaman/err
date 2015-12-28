@@ -79,32 +79,33 @@
   (setf *cursor-callback-p* nil
         *scroll-callback-p* nil))
 
+(let ((render-timer (make-timer :end (/ 1.0 60.0))))
+  (defun flock-render ()
+    (timer-update render-timer)
+    (when (timer-ended-p render-timer)
+      (timer-reset render-timer)
 
-(defun flock-render ()
-  (gl:enable :blend :depth-test)
-  (gl:disable :cull-face)
-  (gl:blend-func :src-alpha :one-minus-src-alpha)
-  (gl:clear-color 0.0 0.0 0.0 1.0)
-  (gl:clear :color-buffer-bit :depth-buffer-bit)
+      (gl:enable :blend :depth-test)
+      (gl:disable :cull-face)
+      (gl:blend-func :src-alpha :one-minus-src-alpha)
+      (gl:clear-color 0.0 0.0 0.0 1.0)
+      (gl:clear :color-buffer-bit :depth-buffer-bit)
 
-  (cube-draw :position (vec3 0.0 0.0 0.0)
-             :color (vec4 0.1 0.4 0.7 1.0)
-             :rotate (vec3 0.0 0.0 0.0))
+      (cube-draw :position (vec3 0.0 0.0 0.0)
+                 :color (vec4 0.1 0.4 0.7 1.0)
+                 :rotate (vec3 0.0 0.0 0.0))
 
-  ;; draw entities
-  (do-map (id comps *entities*)
-    (declare (ignore id))
-    (cube-draw :position (@ comps :pos)
-               :size (@ comps :size)))
+      ;; draw entities
+      (do-map (id comps *entities*)
+        (declare (ignore id))
+        (cube-draw :position (@ comps :pos)
+                   :size (@ comps :size)))
 
-  ;; fps
-  (text-draw (format nil "~4f" (cfloat (average-fps)))
-             (get-font "sans24")
-             :position (vec2 1.0 3.0)
-             :scale (vec2 0.7 0.7)))
-
-(defglobal *move-timer* (make-timer))
-(defglobal *move-timestep* (/ 1.0 60.0))
+      ;; fps
+      (text-draw (format nil "~4f" (cfloat (average-fps)))
+                 (get-font "sans24")
+                 :position (vec2 1.0 3.0)
+                 :scale (vec2 0.7 0.7)))))
 
 (declaim (ftype (function (vec3 vec3) vec3) vec3-to))
 (defun vec3-to (a b)
@@ -117,115 +118,116 @@
   (declare (optimize (speed 3) (safety 0)))
   (kit.glm:vec-length (vec3-to a b)))
 
-(defun flock-update ()
-  (timer-update *move-timer*)
-  (iter (while (>= (timer-time *move-timer*) *move-timestep*))
-    (let ((boid-vecs (make-array 0 :element-type 'vec3
-                                   :fill-pointer 0
-                                   :adjustable t))
-          (boid-counter 0)
-          (max-accel-mag 20.0)
-          (max-vel-mag 10.0))
-      (do-map (id comps *entities*)
-        ;; seperation
-        ;; alignment
-        ;; cohesion
+(let ((move-timer (make-timer :end (/ 1.0 70.0))))
+  (defun flock-update ()
+    (timer-update move-timer)
+    (iter (while (timer-ended-p move-timer))
+      (let ((boid-vecs (make-array 0 :element-type 'vec3
+                                     :fill-pointer 0
+                                     :adjustable t))
+            (boid-counter 0)
+            (max-accel-mag 20.0)
+            (max-vel-mag 10.0))
+        (do-map (id comps *entities*)
+          ;; seperation
+          ;; alignment
+          ;; cohesion
 
-        (let ((n-proximity 0)
-              (seperate-vec (vec3 0.0 0.0 0.0))
-              (align-vec (vec3 0.0 0.0 0.0))
-              (cohesion-vec (vec3 0.0 0.0 0.0))
-              (pos (@ comps :pos))
-              ;; (accel (@ comps :accel))
-              (short-range-sense 3.0)
-              (long-range-sense 8.0))
+          (let ((n-proximity 0)
+                (seperate-vec (vec3 0.0 0.0 0.0))
+                (align-vec (vec3 0.0 0.0 0.0))
+                (cohesion-vec (vec3 0.0 0.0 0.0))
+                (pos (@ comps :pos))
+                ;; (accel (@ comps :accel))
+                ;; (short-range-sense 3.0)
+                (long-range-sense 8.0))
 
-          ;; find nearby boids and get basic behaviour vectors
-          (do-map (oid ocomps *entities*)
-            (unless (= id oid)
-              (let ((opos (@ ocomps :pos))
-                    (ovel (@ ocomps :vel)))
-                (when (< (vec3-distance pos opos) long-range-sense)
-                  (incf n-proximity)
-                  (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3-to pos opos))
-                        align-vec (kit.glm:vec+ align-vec ovel)
-                        cohesion-vec (kit.glm:vec+ cohesion-vec opos))))))
-          (setf
-           ;; opposite of average direction towards others
-           seperate-vec (kit.glm:vec* seperate-vec -1.0)
-           seperate-vec (kit.glm:normalize seperate-vec)
-           seperate-vec (kit.glm:vec* seperate-vec (* max-accel-mag 0.1))
+            ;; find nearby boids and get basic behaviour vectors
+            (do-map (oid ocomps *entities*)
+              (unless (= id oid)
+                (let ((opos (@ ocomps :pos))
+                      (ovel (@ ocomps :vel)))
+                  (when (< (vec3-distance pos opos) long-range-sense)
+                    (incf n-proximity)
+                    (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3-to pos opos))
+                          align-vec (kit.glm:vec+ align-vec ovel)
+                          cohesion-vec (kit.glm:vec+ cohesion-vec opos))))))
+            (setf
+             ;; opposite of average direction towards others
+             seperate-vec (kit.glm:vec* seperate-vec -1.0)
+             seperate-vec (kit.glm:normalize seperate-vec)
+             seperate-vec (kit.glm:vec* seperate-vec (* max-accel-mag 0.1))
 
-           ;; average velocity of others
-           align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
-           align-vec (kit.glm:normalize seperate-vec)
-           align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.15))
+             ;; average velocity of others
+             align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
+             align-vec (kit.glm:normalize seperate-vec)
+             align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.15))
 
-           ;; vector to average position of others
-           cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
-           cohesion-vec (kit.glm:normalize cohesion-vec)
-           cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 1.09)))
+             ;; vector to average position of others
+             cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
+             cohesion-vec (kit.glm:normalize cohesion-vec)
+             cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 1.09)))
 
-          (vector-push-extend (if (> n-proximity 0)
-                                  (kit.glm:vec+ cohesion-vec
-                                                (kit.glm:vec+ seperate-vec
-                                                              align-vec))
-                                  (@ comps :accel))
-                              boid-vecs)))
+            (vector-push-extend (if (> n-proximity 0)
+                                    (kit.glm:vec+ cohesion-vec
+                                                  (kit.glm:vec+ seperate-vec
+                                                                align-vec))
+                                    (@ comps :accel))
+                                boid-vecs)))
 
-      (add-event
-       :code
-       (do-map (id components *entities*)
-         (let* ((pos (@ components :pos))
-                (vel (@ components :vel))
-                (accel (@ components :accel))
-                (a/2 (kit.glm:vec* accel (* 0.5 *move-timestep*)))
-                (min-bound (car *boundary*))
-                (max-bound (cdr *boundary*)))
+        (add-event
+         :code
+         (do-map (id components *entities*)
+           (let* ((pos (@ components :pos))
+                  (vel (@ components :vel))
+                  (accel (@ components :accel))
+                  (a/2 (kit.glm:vec* accel (* 0.5 (timer-end move-timer))))
+                  (min-bound (car *boundary*))
+                  (max-bound (cdr *boundary*)))
 
-           (setf components
-                 (-> components
-                     ;; change accel
-                     (with :accel (aref boid-vecs boid-counter))
+             (setf components
+                   (-> components
+                       ;; change accel
+                       (with :accel (aref boid-vecs boid-counter))
 
-                     ;;sympletic euler integration
-                     ;; v += a/2 * dt
-                     ;; p += v * dt
-                     ;; v += a/2 * dt
-                     (with :vel (kit.glm:vec+ vel a/2))
-                     (with :pos (kit.glm:vec+
-                                 pos (kit.glm:vec* vel *move-timestep*)))
-                     (with :vel
-                           (let ((new-vel (kit.glm:vec+ vel a/2)))
-                             (if (< max-vel-mag (kit.glm:vec-length new-vel))
-                                 (kit.glm:vec* (kit.glm:normalize new-vel) max-vel-mag)
-                                 new-vel)))))
+                       ;;sympletic euler integration
+                       ;; v += a/2 * dt
+                       ;; p += v * dt
+                       ;; v += a/2 * dt
+                       (with :vel (kit.glm:vec+ vel a/2))
+                       (with :pos (kit.glm:vec+
+                                   pos (kit.glm:vec* vel (timer-end move-timer))))
+                       (with :vel
+                             (let ((new-vel (kit.glm:vec+ vel a/2)))
+                               (if (< max-vel-mag (kit.glm:vec-length new-vel))
+                                   (kit.glm:vec* (kit.glm:normalize new-vel) max-vel-mag)
+                                   new-vel)))))
 
-           ;; bound boids
-           (let ((pos-copy (copy-seq (@ components :pos)))
-                 (vel-copy (copy-seq (@ components :vel))))
-             (iter (for p in-vector pos)
-               (for v in-vector vel)
-               (for i from 0)
-               (cond ((< p min-bound)
-                      (setf (aref pos-copy i) max-bound
-                            (aref vel-copy i) (- v))
-                      (with! components :pos pos-copy)
-                      ;; (with! components :vel vel-copy)
-                      )
-                     ((> p max-bound)
-                      (setf (aref pos-copy i) min-bound
-                            (aref vel-copy i) (- v))
-                      (with! components :pos pos-copy)
-                      ;; (with! components :vel vel-copy)
-                      ))))
+             ;; bound boids
+             (let ((pos-copy (copy-seq (@ components :pos)))
+                   (vel-copy (copy-seq (@ components :vel))))
+               (iter (for p in-vector pos)
+                 (for v in-vector vel)
+                 (for i from 0)
+                 (cond ((< p min-bound)
+                        (setf (aref pos-copy i) max-bound
+                              (aref vel-copy i) (- v))
+                        (with! components :pos pos-copy)
+                        ;; (with! components :vel vel-copy)
+                        )
+                       ((> p max-bound)
+                        (setf (aref pos-copy i) min-bound
+                              (aref vel-copy i) (- v))
+                        (with! components :pos pos-copy)
+                        ;; (with! components :vel vel-copy)
+                        ))))
 
-           ;; change in entities
-           (with! *entities* id components))
+             ;; change in entities
+             (with! *entities* id components))
 
-         (incf boid-counter)))
+           (incf boid-counter)))
 
-      (decf (timer-time *move-timer*) *move-timestep*))))
+        (timer-keep-overflow move-timer)))))
 
 (defun flock-cleanup-code ())
 

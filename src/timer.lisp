@@ -12,3 +12,6 @@
 
 (defmethod timer-reset ((timer timer))
   (setf (timer-time timer) 0.0))
+
+(defmethod timer-keep-overflow ((timer timer))
+  (decf (timer-time timer) (timer-end timer)))
