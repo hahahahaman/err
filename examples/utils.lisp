@@ -19,15 +19,19 @@ Utility functions
          (text-program (make-program (merge-pathnames #p"text.v.glsl" shader-dir)
                                      (merge-pathnames #p"text.f.glsl" shader-dir)))
          (cube-program (make-program (merge-pathnames #p"cube.v.glsl" shader-dir)
-                                     (merge-pathnames #p"cube.f.glsl" shader-dir))))
+                                     (merge-pathnames #p"cube.f.glsl" shader-dir)))
+         (rect-program (make-program (merge-pathnames #p"rect.v.glsl" shader-dir)
+                                     (merge-pathnames #p"rect.f.glsl" shader-dir))))
     (init-managers)
     (setf *text-drawer* (make-instance 'text-drawer :program text-program)
           *cube-drawer* (make-instance 'cube-drawer :program cube-program)
+          *rect-drawer* (make-instance 'rect-drawer :program rect-program)
           *camera* (make-instance 'camera :position (vec3 0.0 0.0 70.0)
                                           :movement-speed 10.0))
 
     (load-program "text" text-program)
     (load-program "cube" cube-program)
+    (load-program "rect" rect-program)
 
     (load-font "sans24" (merge-pathnames #p"DejaVuSans.ttf" font-dir) 24)
 
@@ -40,6 +44,16 @@ Utility functions
       (gl:use-program (id cube-program))
       (gl:uniform-matrix-4fv (get-uniform cube-program "view") view nil)
       (gl:uniform-matrix-4fv (get-uniform cube-program "projection") proj nil))
+
+    ;; set rect program matrices
+    (let ((view (get-view-matrix *camera*))
+          (proj (kit.glm:perspective-matrix
+                 (kit.glm:deg-to-rad (zoom *camera*))
+                 (cfloat (/ *width* *height*))
+                 0.1 1000.0)))
+      (gl:use-program (id rect-program))
+      (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
+      (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil))
 
     ;; set text program matrices
     (let ((proj (kit.glm:ortho-matrix 0.0 (cfloat *width*)
