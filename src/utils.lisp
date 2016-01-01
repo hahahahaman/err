@@ -24,11 +24,16 @@ Average time change over a few hundred frames."
           sample-index (mod (1+ sample-index) max-samples))
     (/ max-samples (reduce #'+ samples))))
 
-(defun cap-fps ()
-  "Cap frame rate, preventing resource hogging"
-  (let ((frame-diff (- (+ (/ 1.0d0 +max-fps+) *previous-time*) (glfw:get-time))))
-    (when (> frame-diff 0)
-      (sleep frame-diff))))
+(defun limit-fps ()
+  "Limits frame rate, preventing resource hogging."
+
+  ;; when the frame occurred faster than the max frame time length
+  ;; sleep for that difference
+  (let* ((max-frame-time-length (+ (/ 1.0d0 +max-fps+) *previous-time*))
+         (current-time (glfw:get-time))
+         (sleep-time (- max-frame-time-length current-time)))
+    (when (> sleep-time 0.0)
+      (sleep sleep-time))))
 
 ;;;;;;;;;;;;;;;;;
 ;; handle globals
@@ -55,7 +60,7 @@ Average time change over a few hundred frames."
   "A single function that encompasses global updates."
   (clear-actions)
   (update-dt)
-  (cap-fps))
+  (limit-fps))
 
 (defun initialize-globals ()
   ;; random seed
