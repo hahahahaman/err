@@ -125,7 +125,6 @@
       (let ((boid-vecs (make-array 0 :element-type 'vec3
                                      :fill-pointer 0
                                      :adjustable t))
-            (boid-counter 0)
             (max-accel-mag 20.0)
             (max-vel-mag 10.0))
         (do-map (id comps *entities*)
@@ -177,55 +176,58 @@
 
         (add-event
          :code
-         (do-map (id components *entities*)
-           (let* ((pos (@ components :pos))
-                  (vel (@ components :vel))
-                  (accel (@ components :accel))
-                  (a/2 (kit.glm:vec* accel (* 0.5 (timer-end move-timer))))
-                  (min-bound (car *boundary*))
-                  (max-bound (cdr *boundary*)))
+         (let ((boid-counter 0))
+           (do-map (id components *entities*)
+             (let* ((pos (@ components :pos))
+                    (vel (@ components :vel))
+                    (accel (aref boid-vecs boid-counter))
+                    (timestep (timer-end move-timer))
+                    (a/2 (kit.glm:vec* accel (* 0.5 timestep)))
+                    (min-bound (car *boundary*))
+                    (max-bound (cdr *boundary*)))
 
-             (setf components
-                   (-> components
-                       ;; change accel
-                       (with :accel (aref boid-vecs boid-counter))
+               ;;symplectic euler integration
+               ;; v += a/2 * dt
+               ;; p += v * dt
+               ;; v += a/2 * dt
+               (setf vel (vec3f+ vel a/2)
+                     pos (vec3f+ pos (vec3f* vel timestep))
+                     vel (vec3f+ vel a/2))
 
-                       ;;sympletic euler integration
-                       ;; v += a/2 * dt
-                       ;; p += v * dt
-                       ;; v += a/2 * dt
-                       (with :vel (kit.glm:vec+ vel a/2))
-                       (with :pos (kit.glm:vec+
-                                   pos (kit.glm:vec* vel (timer-end move-timer))))
-                       (with :vel
-                             (let ((new-vel (kit.glm:vec+ vel a/2)))
-                               (if (< max-vel-mag (kit.glm:vec-length new-vel))
-                                   (kit.glm:vec* (kit.glm:normalize new-vel) max-vel-mag)
-                                   new-vel)))))
+               ;; constrain velocity
+               (when (< max-vel-mag (vec3f-length vel))
+                 (setf vel (vec3f* (vec3f-normalize vel) max-vel-mag)))
 
-             ;; bound boids
-             (let ((pos-copy (copy-seq (@ components :pos)))
-                   (vel-copy (copy-seq (@ components :vel))))
-               (iter (for p in-vector pos)
-                 (for v in-vector vel)
-                 (for i from 0)
-                 (cond ((< p min-bound)
-                        (setf (aref pos-copy i) max-bound
-                              (aref vel-copy i) (- v))
-                        (with! components :pos pos-copy)
-                        ;; (with! components :vel vel-copy)
-                        )
-                       ((> p max-bound)
-                        (setf (aref pos-copy i) min-bound
-                              (aref vel-copy i) (- v))
-                        (with! components :pos pos-copy)
-                        ;; (with! components :vel vel-copy)
-                        ))))
+               ;; update new values
+               (setf components
+                     (-> components
+                         (with :accel accel)
+                         (with :vel vel)
+                         (with :pos pos)))
 
-             ;; change in entities
-             (with! *entities* id components))
+               ;; bound boids within an area
+               (let ((pos-copy (copy-seq (@ components :pos)))
+                     (vel-copy (copy-seq (@ components :vel))))
+                 (iter (for p in-vector pos)
+                   (for v in-vector vel)
+                   (for i from 0)
+                   (cond ((< p min-bound)
+                          (setf (aref pos-copy i) max-bound
+                                (aref vel-copy i) (- v))
+                          (with! components :pos pos-copy)
+                          ;; (with! components :vel vel-copy)
+                          )
+                         ((> p max-bound)
+                          (setf (aref pos-copy i) min-bound
+                                (aref vel-copy i) (- v))
+                          (with! components :pos pos-copy)
+                          ;; (with! components :vel vel-copy)
+                          ))))
 
-           (incf boid-counter)))
+               ;; change in entities
+               (with! *entities* id components))
+
+             (incf boid-counter))))
 
         (timer-keep-overflow move-timer)))))
 
