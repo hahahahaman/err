@@ -51,14 +51,22 @@
   "Creates a new type of vector."
   (let* ((vecn (alexandria:symbolicate 'vec (format nil "~A" n)
                                        (string-upcase suffix)))
+         (v+ (alexandria:symbolicate vecn "+"))
+         (v- (alexandria:symbolicate vecn "-"))
+         (v* (alexandria:symbolicate vecn "*"))
+         (v/ (alexandria:symbolicate vecn "/"))
          (vadd (alexandria:symbolicate vecn "-ADD"))
+         (vsub (alexandria:symbolicate vecn "-SUB"))
          (vmul (alexandria:symbolicate vecn "-MUL"))
          (vdiv (alexandria:symbolicate vecn "-DIV"))
          (vlength (alexandria:symbolicate vecn "-LENGTH"))
-         (clamptype (alexandria:symbolicate 'clamp (string-upcase suffix)))
+         (vdotproduct (alexandria:symbolicate vecn "-DOT-PRODUCT"))
+         ;; (vcrossproduct (alexandria:symbolicate vecn "-CROSS-PRODUCT"))
+         (vnormalize (alexandria:symbolicate vecn "-NORMALIZE"))
          (vclamp (alexandria:symbolicate vecn "-CLAMP"))
-         (new-clamptype
-           (when (null (getf *vec-types* `(',type)))
+         (clamptype (alexandria:symbolicate 'clamp (string-upcase suffix)))
+         (new-clamptype ;; clamp function only needs to be defined once per type
+           (when (null (getf *vec-types* `(',type))) ;; check if type exists already
              (setf (getf *vec-types* `(',type)) 1)
              `(progn
                 (declaim (ftype (function (,type ,type ,type) ,type) ,clamptype))
@@ -88,10 +96,40 @@
                 (setf (aref a+ 0) a)
                 (replace a+ r :start1 1)
                 a+))))
+
+         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,v+))
+         (defun ,v+ (v1 v2)
+           (declare (optimize (speed 3) (safety 0)))
+           (,vecn ,@(iter (for i from 0 below n)
+                      (collect `(+ (aref v1 ,i) (aref v2 ,i))))))
+
+         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,v-))
+         (defun ,v- (v1 v2)
+           (declare (optimize (speed 3) (safety 0)))
+           (,vecn ,@(iter (for i from 0 below n)
+                      (collect `(- (aref v1 ,i) (aref v2 ,i))))))
+
+         (declaim (ftype (function (,vecn ,type) ,vecn) ,v*))
+         (defun ,v* (v x)
+           (declare (optimize (speed 3) (safety 0)))
+           (,vecn ,@(iter (for i from 0 below n)
+                      (collect `(* (aref v ,i) x)))))
+
+         (declaim (ftype (function (,vecn ,type) ,vecn) ,v/))
+         (defun ,v/ (v x)
+           (declare (optimize (speed 3) (safety 0)))
+           (,vecn ,@(iter (for i from 0 below n)
+                      (collect `(/ (aref v ,i) x)))))
+
          (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vadd))
          (defun ,vadd (v1 v2)
            (declare (optimize (speed 3) (safety 0)))
            (cl:map ',vecn #'+ v1 v2))
+
+         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vsub))
+         (defun ,vsub (v1 v2)
+           (declare (optimize (speed 3) (safety 0)))
+           (cl:map ',vecn #'- v1 v2))
 
          (declaim (ftype (function (,vecn ,type) ,vecn) ,vmul))
          (defun ,vmul (v n)
@@ -105,7 +143,7 @@
            (declare (optimize (speed 3) (safety 0)))
            (,vmul v (/ 1 n)))
 
-         (declaim (ftype (function (,vecn) single-float) ,vlength))
+         (declaim (ftype (function (,vecn) float) ,vlength))
          (defun ,vlength (v)
            (declare (optimize (speed 3) (safety 0)))
            (sqrt (the ,type
@@ -114,6 +152,16 @@
                                                         (declare (,type x))
                                                         (the ,type (* x x)))
                                                v))))))
+
+         (declaim (ftype (function (,vecn ,vecn) float) ,vdotproduct))
+         (defun ,vdotproduct (v1 v2)
+           (declare (optimize (speed 3) (safety 0)))
+           (+ ,@(iter (for i from 0 below n)
+                  (collect `(* (aref v1 ,i) (aref v2 ,i))))))
+
+         (declaim (ftype (function (,vecn) float) ,vdotproduct))
+         (defun ,vnormalize (v)
+           (,v/ v (,vlength v)))
 
          (declaim (ftype (function (,vecn ,vecn ,vecn) ,vecn) ,vclamp))
          (defun ,vclamp (value low high)
@@ -174,10 +222,13 @@
   "The first value of VEC."
   (aref vec 0))
 (defun y-val (vec)
+  "The second value of VEC."
   (aref vec 1))
 (defun z-val (vec)
+  "The third value of VEC."
   (aref vec 2))
 (defun w-val (vec)
+  "The fourth value of VEC."
   (aref vec 3))
 
 (defun (setf x-val) (value vec)
