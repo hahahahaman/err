@@ -2,11 +2,18 @@
 
 (let ((id 0))
   (defun make-entity (components &optional (entities *entities*))
+    "=> MAP, ID
+Returns the a fset map of ENTITIES, with a new key-value pair of the
+new id and COMPONENTS. The second value is the id."
     (incf id)
     (values (with entities id components) id)))
 
 (defun add-entity (components &optional (entities *entities*))
-  (setf *entities* (make-entity components entities)))
+  "=> ID
+Destructively updates the global *ENTITIES* with a new entity."
+  (multiple-value-bind (ents id) (make-entity components entities)
+    (setf *entities* ents)
+    id))
 
 ;; (defun add-entities (entity-list &optional (entities *entities*))
 ;;   (append entities entity-list))
