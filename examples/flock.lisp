@@ -8,7 +8,6 @@
 |#
 
 (defglobal *boundary* (cons -20.0 20.0))
-(defglobal *move-camera?* nil)
 
 (defun create-boid ()
   (let* ((lo (car *boundary*))
@@ -37,47 +36,48 @@
   (init-shaders)
   (init-entities))
 
-(defun flock-handle-input ()
-  (when (key-pressed-p :escape)
-    (close-window))
-  (when (key-action-p :r :press)
-    (initialize-globals)
-    (flock-init))
+(let ((move-camera? nil))
+  (defun flock-handle-input ()
+    (when (key-pressed-p :escape)
+      (close-window))
+    (when (key-action-p :r :press)
+      (initialize-globals)
+      (flock-init))
 
-  (when (key-action-p :space :press)
-    (setf *move-camera?* (not *move-camera?*)))
+    (when (key-action-p :space :press)
+      (setf move-camera? (not move-camera?)))
 
-  (when *move-camera?*
-    (when *cursor-callback-p*
-      (let ((x-offset (cfloat (- *cursor-x* *last-x*)))
-            (y-offset (cfloat (- *last-y* *cursor-y*))))
-        (process-rotation-movement *camera* x-offset y-offset)))
+    (when move-camera?
+      (when *cursor-callback-p*
+        (let ((x-offset (cfloat (- *cursor-x* *last-x*)))
+              (y-offset (cfloat (- *last-y* *cursor-y*))))
+          (process-rotation-movement *camera* x-offset y-offset)))
 
-    (when *scroll-callback-p*
-      (process-scroll-movement *camera* (cfloat *scroll-y*))) 
+      (when *scroll-callback-p*
+        (process-scroll-movement *camera* (cfloat *scroll-y*))) 
 
-    (when (key-pressed-p :w)
-      (process-direction-movement *camera* +forward+ *dt*))
-    (when (key-pressed-p :s)
-      (process-direction-movement *camera* +backward+ *dt*))
-    (when (key-pressed-p :a)
-      (process-direction-movement *camera* +left+ *dt*))
-    (when (key-pressed-p :d)
-      (process-direction-movement *camera* +right+ *dt*))
+      (when (key-pressed-p :w)
+        (process-direction-movement *camera* +forward+ *dt*))
+      (when (key-pressed-p :s)
+        (process-direction-movement *camera* +backward+ *dt*))
+      (when (key-pressed-p :a)
+        (process-direction-movement *camera* +left+ *dt*))
+      (when (key-pressed-p :d)
+        (process-direction-movement *camera* +right+ *dt*))
 
-    (let ((program (get-program "cube"))
-          (view (get-view-matrix *camera*))
-          (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
-                                            (cfloat (/ *width* *height*))
-                                            0.1 1000.0)))
-      (gl:use-program (id program))
-      (gl:uniform-matrix-4fv (get-uniform program "view") view nil)
-      (gl:uniform-matrix-4fv (get-uniform program "projection") proj nil)))
+      (let ((program (get-program "cube"))
+            (view (get-view-matrix *camera*))
+            (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
+                                              (cfloat (/ *width* *height*))
+                                              0.1 1000.0)))
+        (gl:use-program (id program))
+        (gl:uniform-matrix-4fv (get-uniform program "view") view nil)
+        (gl:uniform-matrix-4fv (get-uniform program "projection") proj nil)))
 
-  (setf *last-x* *cursor-x*
-        *last-y* *cursor-y*)
-  (setf *cursor-callback-p* nil
-        *scroll-callback-p* nil))
+    (setf *last-x* *cursor-x*
+          *last-y* *cursor-y*)
+    (setf *cursor-callback-p* nil
+          *scroll-callback-p* nil)))
 
 (let ((render-timer (make-timer :end (/ 1.0 60.0))))
   (defun flock-render ()
