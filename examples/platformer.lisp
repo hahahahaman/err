@@ -47,7 +47,7 @@
           (s-p (key-pressed-p :s))
           (a-p (key-pressed-p :a))
           (d-p (key-pressed-p :d))
-          (accel-rate 2.0))
+          (accel-rate 10.0))
 
      ;; handle up and down movement
      (when w-p
@@ -131,7 +131,26 @@
                      (with :y y))))
 
          ;; update the entity
-         (with! *entities* id components))))))
+         (with! *entities* id components))))
+
+    (let ((player (@ *entities* *platformer-player*)))
+      (with-slots (position) *camera*
+        (setf position (vec3f (@ player :x) (@ player :y) 70.0))))
+
+    ;; update view matrices based on camera
+    (let ((cube-program (get-program "cube"))
+          (rect-program (get-program "rect"))
+          (view (get-view-matrix *camera*))
+          (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
+                                            (cfloat (/ *width* *height*))
+                                            0.1 1000.0)))
+      (gl:use-program (id cube-program))
+      (gl:uniform-matrix-4fv (get-uniform cube-program "view") view nil)
+      (gl:uniform-matrix-4fv (get-uniform cube-program "projection") proj nil)
+
+      (gl:use-program (id rect-program))
+      (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
+      (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil))))
 
 (let ((render-timer (make-timer :end (/ 1.0 60.0))))
   (defun platformer-render ()
@@ -145,14 +164,19 @@
       (gl:clear :color-buffer-bit :depth-buffer-bit)
 
       (let ((player (@ *entities* *platformer-player*)))
-        (cube-draw :position (vec3f (@ player :x) (@ player :y) 0.0))
-        (text-draw (format nil "~6f ~6f ~6f ~6f ~6f ~6f"
+        (cube-draw :position (vec3f (@ player :x) (@ player :y) 0.0)
+                   :color (vec4f 0.0 0.0 1.0 1.0)
+                   :rotate (vec3f 0.0 0.0 (cfloat (glfw:get-time))))
+        (text-draw (format nil "x:~6f,  y:~6f, vx:~6f, vy:~6f, ax:~6f, ay:~6f"
                            (@ player :x) (@ player :y)
                            (@ player :velx) (@ player :vely)
                            (@ player :accelx) (@ player :accely))
                    (get-font "sans24")
-                   :position (vec2f 3.0 (- (cfloat *height*) 20.0))
-                   :scale (vec2f 1.0 1.0)))
+                   :position (vec2f 0.0 (- (cfloat *height*) 20.0))
+                   :scale (vec2f 0.7 0.7)))
+
+      (cube-draw :position (vec3f 0.0 10.0 0.0))
+      (cube-draw :position (vec3f 10.0 0.0 0.0))
 
       ;; fps
       (text-draw (format nil "~4f" (cfloat (average-fps)))
