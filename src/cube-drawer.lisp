@@ -18,19 +18,35 @@
       (gl:delete-buffers buffers))))
 
 (defun cube-draw (&key
-                    (position (vec3 0.0 0.0 0.0))
-                    (size (vec3 1.0 1.0 1.0))
-                    (color (vec4 1.0 1.0 1.0 1.0))
-                    (rotate (vec3 0.0 0.0 0.0))
+                    (position (vec3f 0.0 0.0 0.0))
+                    (size (vec3f 1.0 1.0 1.0))
+                    (color (vec4f 1.0 1.0 1.0 1.0))
+                    (rotate (vec3f 0.0 0.0 0.0))
+                    (rotation-center (vec3f 0.0 0.0 0.0))
+                    (draw-center (vec3f 0.0 0.0 0.0))
                     (draw-mode :triangles)
                     (drawer *cube-drawer*))
   (with-slots (vao program) drawer
     (gl:use-program (id program))
 
     (let ((model (kit.glm:matrix*
+
+                  ;; move into position
                   (kit.glm:translate position)
+
+                  ;; move back from rotation center
+                  (kit.glm:translate (vec3f-mul rotation-center size))
+
+                  ;; perform rotation
                   (kit.glm:rotate rotate)
+
+                  ;; move to rotation center
+                  (kit.glm:translate (vec3f* (vec3f-mul rotation-center size)
+                                             -1.0))
+
+                  ;; scale first
                   (kit.glm:scale size))))
+
       (gl:uniform-matrix-4fv (get-uniform program "model")
                              model
                              nil)
