@@ -55,8 +55,8 @@
          (v- (alexandria:symbolicate vecn "-"))
          (v* (alexandria:symbolicate vecn "*"))
          (v/ (alexandria:symbolicate vecn "/"))
-         (vadd (alexandria:symbolicate vecn "-ADD"))
-         (vsub (alexandria:symbolicate vecn "-SUB"))
+         ;; (vadd (alexandria:symbolicate vecn "-ADD"))
+         ;; (vsub (alexandria:symbolicate vecn "-SUB"))
          (vmul (alexandria:symbolicate vecn "-MUL"))
          (vdiv (alexandria:symbolicate vecn "-DIV"))
          (vlength (alexandria:symbolicate vecn "-LENGTH"))
@@ -121,27 +121,27 @@
            (,vecn ,@(iter (for i from 0 below n)
                       (collect `(/ (aref v ,i) x)))))
 
-         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vadd))
-         (defun ,vadd (v1 v2)
-           (declare (optimize (speed 3) (safety 0)))
-           (cl:map ',vecn #'+ v1 v2))
+         ;; (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vadd))
+         ;; (defun ,vadd (v1 v2)
+         ;;   (declare (optimize (speed 3) (safety 0)))
+         ;;   (cl:map ',vecn #'+ v1 v2))
 
-         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vsub))
-         (defun ,vsub (v1 v2)
-           (declare (optimize (speed 3) (safety 0)))
-           (cl:map ',vecn #'- v1 v2))
+         ;; (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vsub))
+         ;; (defun ,vsub (v1 v2)
+         ;;   (declare (optimize (speed 3) (safety 0)))
+         ;;   (cl:map ',vecn #'- v1 v2))
 
-         (declaim (ftype (function (,vecn ,type) ,vecn) ,vmul))
+         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vmul))
          (defun ,vmul (v n)
            (declare (optimize (speed 3) (safety 0)))
-           (cl:map ',vecn (lambda (x)
-                            (declare (,type x))
-                            (the ,type (* x n))) v))
+           (,vecn ,@(iter (for i from 0 below n)
+                      (collect `(* (aref v1 ,i) (aref v2 ,i))))))
 
-         (declaim (ftype (function (,vecn ,type) ,vecn) ,vdiv))
+         (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vdiv))
          (defun ,vdiv (v n)
            (declare (optimize (speed 3) (safety 0)))
-           (,vmul v (/ 1 n)))
+           (,vecn ,@(iter (for i from 0 below n)
+                      (collect `(/ (aref v1 ,i) (aref v2 ,i))))))
 
          (declaim (ftype (function (,vecn) float) ,vlength))
          (defun ,vlength (v)
@@ -218,22 +218,37 @@
 ;;   (declare (optimize (speed 3) (safety 0)))
 ;;   (cl:map 'vec2 #'clamp value low high))
 
-(defun x-val (vec)
-  "The first value of VEC."
-  (aref vec 0))
-(defun y-val (vec)
-  "The second value of VEC."
-  (aref vec 1))
-(defun z-val (vec)
-  "The third value of VEC."
-  (aref vec 2))
-(defun w-val (vec)
-  "The fourth value of VEC."
-  (aref vec 3))
+(defmacro define-vec-n-val (func-name n)
+  `(progn
+     (declaim (ftype (function (vector) number) ,func-name))
+     (defun ,func-name (vec)
+       (declare (optimize (speed 3) (safety 0)))
+       (aref vec ,n))
 
-(defun (setf x-val) (value vec)
-  (setf (aref vec 0) value))
-(defun (setf y-val) (value vec)
-  (setf (aref vec 1) value))
-(defun (setf z-val) (value vec)
-  (setf (aref vec 2) value))
+     (defun (setf ,func-name) (value vec)
+       (setf (aref vec ,n) value))))
+
+(define-vec-n-val x-val 0)
+(define-vec-n-val y-val 1)
+(define-vec-n-val z-val 2)
+(define-vec-n-val w-val 3)
+
+;; (defun x-val (vec)
+;;   "The first value of VEC."
+;;   (aref vec 0))
+;; (defun y-val (vec)
+;;   "The second value of VEC."
+;;   (aref vec 1))
+;; (defun z-val (vec)
+;;   "The third value of VEC."
+;;   (aref vec 2))
+;; (defun w-val (vec)
+;;   "The fourth value of VEC."
+;;   (aref vec 3))
+
+;; (defun (setf x-val) (value vec)
+;;   (setf (aref vec 0) value))
+;; (defun (setf y-val) (value vec)
+;;   (setf (aref vec 1) value))
+;; (defun (setf z-val) (value vec)
+;;   (setf (aref vec 2) value))
