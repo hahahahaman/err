@@ -110,8 +110,8 @@ Remember to free gl-array afterwards."
 
 (declaim (ftype (function (real) single-float) cfloat))
 (defun cfloat (n)
-  (declare (optimize (speed 3) (safety 0)))
   "Coerce N to single-float. Just makes the function shorter."
+  (declare (optimize (speed 3) (safety 0)))
   (coerce n 'single-float))
 
 (defun sizeof (type)

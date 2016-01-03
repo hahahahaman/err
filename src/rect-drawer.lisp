@@ -55,7 +55,7 @@ DRAWER is a rect-drawer object that by default is the global rect-drawer."
                   ;; order of operations is bottom to top since
                   ;; matrix multiplication
 
-                  ;;finally move to POS
+                  ;;finally move to POSITION
                   (kit.glm:translate position)
 
                   ;; move to draw center
@@ -65,7 +65,8 @@ DRAWER is a rect-drawer object that by default is the global rect-drawer."
                                                  (y-val size)))
                                       (cfloat (* (z-val draw-center)
                                                  1.0)))
-                  ;; move back
+
+                  ;; move back from rotation center
                   (kit.glm:translate* (cfloat (* (x-val rotation-center)
                                                  (x-val size)))
                                       (cfloat (* (y-val rotation-center)

@@ -95,7 +95,7 @@ resource-manager
 camera
 |#
 
-(defglobal *camera*)
+(defglobal *camera* nil)
 
 #|
 drawer
