@@ -47,9 +47,7 @@
                   ;; scale first
                   (kit.glm:scale size))))
 
-      (gl:uniform-matrix-4fv (get-uniform program "model")
-                             model
-                             nil)
+      (gl:uniform-matrix-4fv (get-uniform program "model") model nil)
       (gl:uniformfv (get-uniform program "color") color))
     (gl:bind-vertex-array vao)
     (gl:draw-arrays draw-mode 0 36)

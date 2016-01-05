@@ -19,10 +19,10 @@
       (gl:bind-buffer :array-buffer vbo)
       (with-sequence-to-gl-array (verts
                                   ;;      Pos     Tex
-                                  (vector 0.0 0.0 0.0 0.0
-                                          1.0 0.0 1.0 0.0
-                                          0.0 1.0 0.0 1.0
-                                          1.0 1.0 1.0 1.0)
+                                  (vector -0.5 -0.5 0.0 0.0
+                                          0.5 -0.5 1.0 0.0
+                                          -0.5 0.5 0.0 1.0
+                                          0.5 0.5 1.0 1.0)
                                   :float)
         (gl:buffer-data :array-buffer :static-draw verts))
 
@@ -41,33 +41,54 @@
                       (size (kit.glm:vec2 10.0 10.0))
                       (color (kit.glm:vec4 1.0 1.0 1.0 1.0))
                       (rotate 0.0)
+                      (rotation-center (vec3f 0.0 0.0 0.0))
+                      (draw-center (vec3f 0.0 0.0 0.0))
                       (drawer *sprite-drawer*))
   (with-slots (program vao current-texture-id) drawer
     (use program)
 
     (gl:uniformfv (get-uniform program "spriteColor") color)
     (let ((model (kit.glm:matrix*
+                  ;; order of operations is bottom to top since
+                  ;; matrix multiplication
+
                   ;;finally move to POSITION
-                  (kit.glm:translate (kit.glm:vec3 (x-val position)
-                                                   (y-val position)
-                                                   (z-val position)))
-                  ;; move top left to 0.0, 0.0
-                  (kit.glm:translate* (cfloat (* 0.5 (x-val size)))
-                                      (cfloat (* 0.5 (y-val size)))
-                                      0.0)
+                  (kit.glm:translate position)
+
+                  ;; move to draw center
+                  (kit.glm:translate* (cfloat (* (x-val draw-center)
+                                                 (x-val size)))
+                                      (cfloat (* (y-val draw-center)
+                                                 (y-val size)))
+                                      (cfloat (* (z-val draw-center)
+                                                 1.0)))
+
+                  ;; move back from rotation center
+                  (kit.glm:translate* (cfloat (* (x-val rotation-center)
+                                                 (x-val size)))
+                                      (cfloat (* (y-val rotation-center)
+                                                 (y-val size)))
+                                      (cfloat (* (z-val rotation-center)
+                                                 1.0)))
                   ;; rotate around the z-axis
                   (kit.glm:rotate* 0.0 0.0 (cfloat rotate))
-                  ;; move sprite so that its center is at 0.0, 0.0, 0.0
-                  (kit.glm:translate* (cfloat (* -0.5 (x-val size)))
-                                      (cfloat (* -0.5 (y-val size)))
-                                      0.0)
+                  ;; move to rotation center
+                  (kit.glm:translate* (cfloat (* -1.0
+                                                 (x-val rotation-center)
+                                                 (x-val size)))
+                                      (cfloat (* -1.0
+                                                 (y-val rotation-center)
+                                                 (y-val size)))
+                                      (cfloat (* -1.0
+                                                 (z-val rotation-center)
+                                                 1.0)))
                   ;; scale first, z axis remain constant since 2d
-                  (kit.glm:scale (kit.glm:vec3 (x-val size) (y-val size) 0.0)))))
+                  (kit.glm:scale* (cfloat (x-val size)) (cfloat (y-val size)) 0.0))))
 
       ;; set model uniform
       (gl:uniform-matrix-4fv (get-uniform program "model") (vector model) nil))
 
-    ;; bind TEXTURE2D
+    ;; bind TEXTURE2D unless it is already bound
     (unless (eql (id texture2d) current-texture-id)
       (gl:active-texture :texture0)
       (gl:bind-texture :texture-2d (id texture2d))
