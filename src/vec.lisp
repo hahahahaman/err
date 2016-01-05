@@ -132,7 +132,7 @@
          ;;   (cl:map ',vecn #'- v1 v2))
 
          (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vmul))
-         (defun ,vmul (v n)
+         (defun ,vmul (v1 v2)
            (declare (optimize (speed 3) (safety 0)))
            (,vecn ,@(iter (for i from 0 below n)
                       (collect `(* (aref v1 ,i) (aref v2 ,i))))))
