@@ -30,72 +30,71 @@ Draws a text string on screen."
   (with-slots (program vao vbo) drawer
     (gl:use-program (id program))
     (gl:uniformfv (get-uniform program "textColor") color)
-    (let ((model (kit.glm:matrix*
-                  ;; order of operations is bottom to top since
-                  ;; matrix multiplication
-
-                  ;;finally move to POSITION
-                  (kit.glm:translate position)
-
-                  ;; move to draw center
-                  (kit.glm:translate* (cfloat (* (x-val draw-center)
-                                                 (x-val scale)))
-                                      (cfloat (* (y-val draw-center)
-                                                 (y-val scale)))
-                                      (cfloat (* (z-val draw-center)
-                                                 1.0)))
-
-                  ;; move back from rotation center
-                  (kit.glm:translate* (cfloat (* (x-val rotation-center)
-                                                 (x-val scale)))
-                                      (cfloat (* (y-val rotation-center)
-                                                 (y-val scale)))
-                                      (cfloat (* (z-val rotation-center)
-                                                 1.0)))
-                  ;; ;; rotate around the z-axis
-                  (kit.glm:rotate* 0.0 0.0 (cfloat rotate))
-                  ;; move to rotation center
-                  (kit.glm:translate* (cfloat (* -1.0
-                                                 (x-val rotation-center)
-                                                 (x-val scale)))
-                                      (cfloat (* -1.0
-                                                 (y-val rotation-center)
-                                                 (y-val scale)))
-                                      (cfloat (* -1.0
-                                                 (z-val rotation-center)
-                                                 1.0)))
-
-                  ;; scale first, z axis remain constant since 2d
-                  (kit.glm:scale* (cfloat (x-val scale)) (cfloat (y-val scale)) 0.0))))
-
-      ;; set model uniform
-      (gl:uniform-matrix-4fv (get-uniform program "model") (vector model) nil))
-
     (gl:bind-vertex-array vao)
     ;; iteratively render all characters of TEXT
     (multiple-value-bind (width height) (text-dimensions
                                          text
                                          font-text-chars
                                          :scale scale)
-      (let ((xpos (- (x-val position) (* width (x-val draw-center))))
-            (ypos (- (y-val position) (* height (y-val draw-center)))))
+      (let ((model (kit.glm:matrix*
+                    ;; order of operations is bottom to top since
+                    ;; matrix multiplication
+
+                    ;; ;;finally move to POSITION
+                    ;; (kit.glm:translate position)
+
+                    ;; ;; move to draw center
+                    ;; (kit.glm:translate* (cfloat (* (x-val draw-center)
+                    ;;                                width))
+                    ;;                     (cfloat (* (y-val draw-center)
+                    ;;                                height))
+                    ;;                     (cfloat (* (z-val draw-center)
+                    ;;                                1.0)))
+
+                    ;; move back from rotation center
+                    (kit.glm:translate* (cfloat (* (x-val rotation-center)
+                                                   width))
+                                        (cfloat (* (y-val rotation-center)
+                                                   height))
+                                        (cfloat (* (z-val rotation-center)
+                                                   1.0)))
+
+                    ;; ;; rotate around the z-axis
+                    (kit.glm:rotate* 0.0 0.0 (cfloat rotate))
+
+                    ;; move to rotation center
+                    (kit.glm:translate* (cfloat (* -1.0
+                                                   (x-val rotation-center)
+                                                   width))
+                                        (cfloat (* -1.0
+                                                   (y-val rotation-center)
+                                                   height))
+                                        (cfloat (* -1.0
+                                                   (z-val rotation-center)
+                                                   1.0)))
+
+                    ;; scale first, z axis remain constant since 2d
+                    ;; (kit.glm:scale* (cfloat (x-val scale)) (cfloat (y-val scale)) 0.0)
+                    )))
+
+        ;; set model uniform
+        (gl:uniform-matrix-4fv (get-uniform program "model") (vector model) nil))
+      (let ((xpos (- (x-val position) (* width 0.5) (* width (x-val draw-center))))
+            (ypos (- (y-val position) (* height 0.5) (* height (y-val draw-center)))))
         (iter (for c in-vector text)
           (let* ((tc (@ font-text-chars c)) ;; text-char
+                 ;; values from TC
                  (text-char-bearing (text-char-bearing tc))
                  (text-char-size (text-char-size tc))
                  (text-char-advance (text-char-advance tc))
-                 ;; (tc-bearing (vec2f-mul (vec2f (cfloat (x-val text-char-bearing))
-                 ;;                               (cfloat (y-val text-char-bearing)))
-                 ;;                        scale))
-                 ;; (tc-size (vec2f-mul (vec2f (cfloat (x-val text-char-size))
-                 ;;                            (cfloat (y-val text-char-size)))
-                 ;;                     scale))
-                 ;; (tc-advance (* (x-val scale) text-char-advance))
-                 (tc-bearing (vec2f (cfloat (x-val text-char-bearing))
-                                    (cfloat (y-val text-char-bearing))))
-                 (tc-size (vec2f (cfloat (x-val text-char-size))
-                                 (cfloat (y-val text-char-size))))
-                 (tc-advance text-char-advance)
+                 ;; scaled values
+                 (tc-bearing (vec2f-mul (vec2f (cfloat (x-val text-char-bearing))
+                                               (cfloat (y-val text-char-bearing)))
+                                        scale))
+                 (tc-size (vec2f-mul (vec2f (cfloat (x-val text-char-size))
+                                            (cfloat (y-val text-char-size)))
+                                     scale))
+                 (tc-advance (* (x-val scale) text-char-advance))
                  (x (+ xpos (x-val tc-bearing)))
                  (y (+ ypos (y-val tc-bearing)))
                  (w (x-val tc-size))
@@ -149,19 +148,21 @@ and scale."
   "=> HEIGHT
 Finds the total height of a string of text rendered with the given font
 characters and scale."
-  (let ((lowest-y 0.0)
+  (let (;; (lowest-y 0.0)
         (highest-y 0.0))
     (iter (for c in-vector text)
       (let* ((tc (@ font-text-chars c))
-             (bottom (* (y-val (text-char-bearing tc))
-                        (y-val scale)))
+             ;; (bottom (* (y-val (text-char-bearing tc))
+             ;;            (y-val scale)))
              (h (* (y-val (text-char-size tc))
                    (y-val scale))))
-        (when (< bottom lowest-y)
-          (setf lowest-y bottom))
-        (when (> (+ bottom h) highest-y)
-          (setf highest-y (+ bottom h)))))
-    (- highest-y lowest-y)))
+        ;; (when (< bottom lowest-y)
+        ;;   (setf lowest-y bottom))
+        ;; (when (> (+ bottom h) highest-y)
+        ;;   (setf highest-y (+ bottom h)))
+        (when (> h highest-y)
+          (setf highest-y h))))
+    highest-y))
 
 (defun text-dimensions (text font-text-chars
                         &key
@@ -170,17 +171,23 @@ characters and scale."
 Returns the width and height of the the text string with the given font
 characters and scale."
   (let ((width 0.0)
-        (lowest-y 0.0)
-        (highest-y 0.0))
+        ;; (lowest-y 0.0)
+        (highest-y 0.0)
+        )
     (iter (for c in-vector text)
       (let* ((tc (@ font-text-chars c))
-             (bottom (* (y-val (text-char-bearing tc))
-                        (y-val scale)))
+             ;; (bottom (* (y-val (text-char-bearing tc))
+             ;;            (y-val scale)))
              (h (* (y-val (text-char-size tc))
                    (y-val scale))))
-        (incf width (* (text-char-advance tc) (x-val scale)))
-        (when (< bottom lowest-y)
-          (setf lowest-y bottom))
-        (when (> (+ bottom h) highest-y)
-          (setf highest-y (+ bottom h)))))
-    (values width (- highest-y lowest-y))))
+        ;; (when (< bottom lowest-y)
+        ;;   (setf lowest-y bottom))
+        ;; (when (> (+ bottom h) highest-y)
+        ;;   (setf highest-y (+ bottom h)))
+        (when (> h highest-y)
+          (setf highest-y h))
+        (incf width (* (text-char-advance tc) (x-val scale)))))
+    (values width
+            ;; (- highest-y lowest-y)
+            highest-y
+            )))
