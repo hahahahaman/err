@@ -16,13 +16,16 @@
 ;;   )
 
 (defun platformer-init ()
+  (initialize-globals)
   (init-shaders)
 
   ;; player
-  (setf *platformer-player* (add-entity (map (:x 0.0)
-                                             (:y 0.0)
-                                             (:w 32)
-                                             (:h 32)
+  (setf *platformer-player* (add-entity (map (:x 10.0)
+                                             (:y 10.0)
+                                             (:z 0.0)
+                                             (:w 5.0)
+                                             (:h 5.0)
+                                             (:color (vec4f 1.0 0.0 0.0 1.0))
                                              (:velx 0.0)
                                              (:vely 0.0)
                                              (:accelx 0.0)
@@ -32,31 +35,45 @@
   ;;platforms
   (setf *platformer-level* (with-last *platformer-level* (map (:x 0.0)
                                                               (:y 0.0)
+                                                              (:z -1.0)
                                                               (:w 100.0)
-                                                              (:h 100.0)))))
+                                                              (:h 5.0)))))
+
+(let ((restart nil))
+  (defun set-restart-window (&optional (value t))
+    (setf restart value))
+  (defun restart-window-p ()
+    restart)
+  (defun restart-window ()
+    (setf restart nil)))
 
 (defun platformer-handle-input ()
   (when (key-action-p :escape :press)
     (glfw:set-window-should-close))
 
+  (when (and (key-pressed-p :left-control)
+             (key-pressed-p :left-alt)
+             (key-action-p :r :press))
+    (platformer-init))
+
   ;; player input
   (add-event
    :code
    (let* ((player (@ *entities* *platformer-player*))
-          (w-p (key-pressed-p :w))
-          (s-p (key-pressed-p :s))
-          (a-p (key-pressed-p :a))
-          (d-p (key-pressed-p :d))
+          (up-p (or (key-pressed-p :w) (key-pressed-p :up)))
+          (down-p (or (key-pressed-p :s) (key-pressed-p :down)))
+          (left-p (or (key-pressed-p :a) (key-pressed-p :left)))
+          (right-p (or (key-pressed-p :d) (key-pressed-p :right)))
           (accel-rate 10.0))
 
      ;; handle up and down movement
-     (when w-p
+     (when up-p
        (with! player :accely accel-rate))
-     (when s-p
+     (when down-p
        (with! player :accely (- accel-rate)))
-     (when (and w-p s-p)
+     (when (and up-p down-p)
        (with! player :accely 0.0))
-     (when (not (or w-p s-p))
+     (when (not (or up-p down-p))
        (cond ((< (abs (@ player :vely)) 2.0)
               (with! player :vely 0.0)
               (with! player :accely 0.0))
@@ -64,13 +81,13 @@
                                          accel-rate 5.0)))))
 
      ;; left and right movement
-     (when d-p
+     (when right-p
        (with! player :accelx accel-rate))
-     (when a-p
+     (when left-p
        (with! player :accelx (- accel-rate)))
-     (when (and a-p d-p)
+     (when (and left-p right-p)
        (with! player :accelx 0.0))
-     (when (not (or d-p a-p))
+     (when (not (or right-p left-p))
        (cond ((< (abs (@ player :velx)) 2.0)
               (with! player :velx 0.0)
               (with! player :accelx 0.0))
@@ -152,6 +169,20 @@
       (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
       (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil))))
 
+
+(defun platformer-render-entities ()
+  (do-map (id components *entities*)
+    (declare (ignore id))
+    (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
+               :size (vec2f (@ components :w) (@ components :h))
+               :color (@ components :color)
+               :draw-center (vec3f -0.5 0.5 0.0))))
+(defun platformer-render-level ()
+  (do-seq (components *platformer-level*)
+    (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
+               :size (vec2f (@ components :w) (@ components :h))
+               :draw-center (vec3f -0.5 0.5 0.0))))
+
 (let ((render-timer (make-timer :end (/ 1.0 60.0))))
   (defun platformer-render ()
     (timer-update render-timer)
@@ -163,26 +194,38 @@
       (gl:clear-color 0.0 0.0 0.0 1.0)
       (gl:clear :color-buffer-bit :depth-buffer-bit)
 
-      (let ((player (@ *entities* *platformer-player*)))
-        (cube-draw :position (vec3f (@ player :x) (@ player :y) 0.0)
-                   :color (vec4f 0.0 0.0 1.0 1.0)
-                   :rotate (vec3f 0.0 0.0 (cfloat (glfw:get-time))))
-        (text-draw (format nil "x:~6f,  y:~6f, vx:~6f, vy:~6f, ax:~6f, ay:~6f"
-                           (@ player :x) (@ player :y)
-                           (@ player :velx) (@ player :vely)
-                           (@ player :accelx) (@ player :accely))
-                   (get-font "sans24")
-                   :position (vec2f 0.0 (- (cfloat *height*) 20.0))
-                   :scale (vec2f 0.7 0.7)))
+      (platformer-render-level)
+      (platformer-render-entities)
 
-      (cube-draw :position (vec3f 0.0 10.0 0.0))
-      (cube-draw :position (vec3f 10.0 0.0 0.0))
+      (let* ((player (@ *entities* *platformer-player*))
+             (text-scale (vec2f 1.0 1.0))
+             (player-data-text
+               (format nil "x:~6f,  y:~6f, vx:~6f, vy:~6f, ax:~6f, ay:~6f"
+                       (@ player :x) (@ player :y)
+                       (@ player :velx) (@ player :vely)
+                       (@ player :accelx) (@ player :accely))))
+        ;; (cube-draw :position (vec3f (@ player :x) (@ player :y) 0.0)
+        ;;            :size (vec3f 1.0 1.0 1.0)
+        ;;            :color (vec4f 0.0 0.0 1.0 1.0)
+        ;;            :draw-center (vec3f -0.5 0.5 0.0))
+        ;; (cube-draw :position (vec3f 0.0 10.0 0.0)
+        ;;            :size (vec3f 1.0 1.0 1.0))
+        ;; (cube-draw :position (vec3f 10.0 0.0 0.0))
+        (multiple-value-bind (w h) (text-dimensions player-data-text
+                                                    (get-font "sans24")
+                                                    :scale text-scale)
+          (text-draw player-data-text
+                     (get-font "sans24")
+                     :draw-center (vec3f -0.5 -0.5 0.0)
+                     :position (vec3f (cfloat (- *width* w)) (cfloat (- *height* h)) 0.0)
+                     :scale text-scale)))
 
       ;; fps
       (text-draw (format nil "~4f" (cfloat (average-fps)))
                  (get-font "sans24")
-                 :position (vec2f 1.0 3.0)
-                 :scale (vec2f 0.7 0.7))
+                 :position (vec3f 0.0 0.0 0.0)
+                 :scale (vec2f 1.0 1.0)
+                 :draw-center (vec3f -0.5 -0.5 0.0))
 
       (timer-reset render-timer))))
 
