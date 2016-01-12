@@ -1,4 +1,4 @@
-* TODO add center-mode parameter for draw functions
-* TODO improve render speed with instanced rendering
+* TODO add center-mode parameters for draw functions
+* TODO improve render speed with instanced rendering or batch rendering (send lots of data through the vbo
 * DONE add macro that optimizes vec operations
 CLOSED: [2016-01-02 Sat 19:38]
