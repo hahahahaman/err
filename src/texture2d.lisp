@@ -69,7 +69,8 @@
   (gl:bind-texture :texture-2d (id tex)))
 
 (defun make-texture2d (filepath &optional (alpha t))
-  "Returns texture2d instance."
+  "=> TEXTURE2D
+Creates a new texture2d instance with the picture at FILEPATH."
   (declare (boolean alpha))
   (let ((texture2d (make-instance 'texture2d)))
     (with-accessors ((internal-format internal-format)

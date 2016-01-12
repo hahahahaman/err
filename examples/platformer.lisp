@@ -2,6 +2,7 @@
 
 (defglobal *platformer-player* nil)
 (defglobal *platformer-level* (empty-seq))
+(defglobal *platformer-gravity* 10.0)
 
 (defun rects-collide-p (x y w h ox oy ow oh)
   "Rectangle collision check based on bottom left position of the rectangle."
@@ -20,18 +21,27 @@
   (init-shaders)
 
   ;; player
-  (setf *platformer-player* (add-entity (map (:x 10.0)
-                                             (:y 10.0)
-                                             (:z 0.0)
-                                             (:w 5.0)
-                                             (:h 5.0)
-                                             (:color (vec4f 1.0 0.0 0.0 1.0))
-                                             (:velx 0.0)
-                                             (:vely 0.0)
-                                             (:accelx 0.0)
-                                             (:accely 0.0)
-                                             (:max-velx 10.0)
-                                             (:max-vely 10.0))))
+  (let* ((proj-dir (asdf:system-source-directory :err-examples))
+         (images-dir (if *executable*
+                         #p"./data/images/"
+                         (merge-pathnames #p"examples/data/images/" proj-dir)) ))
+    (setf *platformer-player*
+          (add-entity (map (:x 10.0)
+                           (:y 10.0)
+                           (:z 1.0)
+                           (:w 5.0)
+                           (:h 5.0)
+                           (:color (vec4f 1.0 1.0 1.0 1.0))
+                           (:texture (make-texture2d (namestring (merge-pathnames
+                                                                  #p"yoshi.png"
+                                                                  images-dir))))
+                           (:velx 0.0)
+                           (:vely 0.0)
+                           (:accelx 0.0)
+                           (:accely 0.0)
+                           (:max-velx 10.0)
+                           (:max-vely 10.0)
+                           (:gravity t)))))
   ;;platforms
   (setf *platformer-level* (with-last *platformer-level* (map (:x 0.0)
                                                               (:y 0.0)
@@ -152,11 +162,14 @@
 
     (let ((player (@ *entities* *platformer-player*)))
       (with-slots (position) *camera*
-        (setf position (vec3f (@ player :x) (@ player :y) 70.0))))
+        (setf position (vec3f (+ (@ player :x) (/ (@ player :w) 2.0))
+                              (+ (@ player :y) (/ (@ player :h) 2.0))
+                              70.0))))
 
     ;; update view matrices based on camera
     (let ((cube-program (get-program "cube"))
           (rect-program (get-program "rect"))
+          (sprite-program (get-program "sprite"))
           (view (get-view-matrix *camera*))
           (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
                                             (cfloat (/ *width* *height*))
@@ -167,16 +180,28 @@
 
       (gl:use-program (id rect-program))
       (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
-      (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil))))
+      (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil)
+
+      (gl:use-program (id sprite-program))
+      (gl:uniform-matrix-4fv (get-uniform sprite-program "view") view nil)
+      (gl:uniform-matrix-4fv (get-uniform sprite-program "projection") proj nil))))
 
 
 (defun platformer-render-entities ()
   (do-map (id components *entities*)
     (declare (ignore id))
-    (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
-               :size (vec2f (@ components :w) (@ components :h))
-               :color (@ components :color)
-               :draw-center (vec3f -0.5 0.5 0.0))))
+    ;; (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
+    ;;            :size (vec2f (@ components :w) (@ components :h))
+    ;;            :color (@ components :color)
+    ;;            :draw-center (vec3f -0.5 0.5 0.0))
+    (sprite-draw (@ components :texture)
+                 :position (vec3f (@ components :x) (@ components :y) (@ components :z))
+                 :size (vec2f (@ components :w) (@ components :h))
+                 :color (@ components :color)
+                 :draw-center (vec3f -0.5 0.5 0.0)
+                 :clip-position (vec2f 0.0 0.0)
+                 :clip-size (vec2f 0.0 0.0))))
+
 (defun platformer-render-level ()
   (do-seq (components *platformer-level*)
     (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
