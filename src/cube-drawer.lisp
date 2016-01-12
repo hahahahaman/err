@@ -34,6 +34,9 @@
                   ;; move into position
                   (kit.glm:translate position)
 
+                  ;; move to draw center
+                  (kit.glm:translate (vec3f* draw-center -1.0))
+
                   ;; move back from rotation center
                   (kit.glm:translate (vec3f-mul rotation-center size))
 

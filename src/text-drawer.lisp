@@ -16,6 +16,7 @@
 (defmethod initialize-instance :after ((drawer text-drawer) &key)
   t)
 
+;; TODO get rotation to work
 (defun text-draw (text font-text-chars
                   &key
                     (position (vec3f 0.0 0.0 0.0))
@@ -148,18 +149,11 @@ and scale."
   "=> HEIGHT
 Finds the total height of a string of text rendered with the given font
 characters and scale."
-  (let (;; (lowest-y 0.0)
-        (highest-y 0.0))
+  (let ((highest-y 0.0))
     (iter (for c in-vector text)
       (let* ((tc (@ font-text-chars c))
-             ;; (bottom (* (y-val (text-char-bearing tc))
-             ;;            (y-val scale)))
              (h (* (y-val (text-char-size tc))
                    (y-val scale))))
-        ;; (when (< bottom lowest-y)
-        ;;   (setf lowest-y bottom))
-        ;; (when (> (+ bottom h) highest-y)
-        ;;   (setf highest-y (+ bottom h)))
         (when (> h highest-y)
           (setf highest-y h))))
     highest-y))
@@ -176,18 +170,9 @@ characters and scale."
         )
     (iter (for c in-vector text)
       (let* ((tc (@ font-text-chars c))
-             ;; (bottom (* (y-val (text-char-bearing tc))
-             ;;            (y-val scale)))
              (h (* (y-val (text-char-size tc))
                    (y-val scale))))
-        ;; (when (< bottom lowest-y)
-        ;;   (setf lowest-y bottom))
-        ;; (when (> (+ bottom h) highest-y)
-        ;;   (setf highest-y (+ bottom h)))
         (when (> h highest-y)
           (setf highest-y h))
         (incf width (* (text-char-advance tc) (x-val scale)))))
-    (values width
-            ;; (- highest-y lowest-y)
-            highest-y
-            )))
+    (values width highest-y)))
