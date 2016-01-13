@@ -39,15 +39,31 @@
                            (:vely 0.0)
                            (:accelx 0.0)
                            (:accely 0.0)
-                           (:max-velx 10.0)
-                           (:max-vely 10.0)
+                           (:max-velx 50.0)
+                           (:max-vely 100.0)
                            (:gravity t)))))
   ;;platforms
-  (setf *platformer-level* (with-last *platformer-level* (map (:x 0.0)
-                                                              (:y 0.0)
-                                                              (:z -1.0)
-                                                              (:w 100.0)
-                                                              (:h 5.0)))))
+  (setf *platformer-level* (-> *platformer-level*
+                               (with-last (map (:x 0.0)
+                                               (:y 0.0)
+                                               (:z -1.0)
+                                               (:w 100.0)
+                                               (:h 5.0)))
+                               (with-last (map (:x 0.0)
+                                               (:y 100.0)
+                                               (:z -1.0)
+                                               (:w 5.0)
+                                               (:h 100.0)))
+                               (with-last (map (:x 0.0)
+                                               (:y 100.0)
+                                               (:z -1.0)
+                                               (:w 100.0)
+                                               (:h 5.0)))
+                               (with-last (map (:x 95.0)
+                                               (:y 95.0)
+                                               (:z -1.0)
+                                               (:w 5.0)
+                                               (:h 100.0))))))
 
 (let ((restart nil))
   (defun set-restart-window (&optional (value t))
@@ -106,6 +122,15 @@
 
      (with! *entities* *platformer-player* player))))
 
+(defun valid-move-p (x y w h)
+  (let ((result t))
+    (do-seq (components *platformer-level*)
+      (when (rects-collide-p x y w h
+                             (@ components :x) (@ components :y)
+                             (@ components :w) (@ components :h))
+        (setf result nil)))
+    result))
+
 (let ((update-timer (make-timer :end (/ 1.0 70.0))))
   (defun platformer-update ()
     (timer-update update-timer)
@@ -118,6 +143,8 @@
        (do-map (id components *entities*)
          (let* ((x (@ components :x))
                 (y (@ components :y))
+                (w (@ components :w))
+                (h (@ components :h))
                 (velx (@ components :velx))
                 (vely (@ components :vely))
                 (max-velx (@ components :max-velx))
@@ -143,8 +170,11 @@
            (setf velx (clampf velx (- max-velx) max-velx)
                  vely (clampf vely (- max-vely) max-vely))
 
-           (incf x (* velx dt))
-           (incf y (* vely dt))
+           (when (valid-move-p (+ x (* velx dt)) y w h)
+             (incf x (* velx dt)))
+
+           (when (valid-move-p x (+ y (* vely dt)) w h)
+             (incf y (* vely dt)))
 
            (incf velx accelx/2)
            (incf vely accely/2)
@@ -164,7 +194,8 @@
       (with-slots (position) *camera*
         (setf position (vec3f (+ (@ player :x) (/ (@ player :w) 2.0))
                               (+ (@ player :y) (/ (@ player :h) 2.0))
-                              70.0))))
+                              70.0))
+        (update-camera-vectors *camera*)))
 
     ;; update view matrices based on camera
     (let ((cube-program (get-program "cube"))
@@ -186,21 +217,21 @@
       (gl:uniform-matrix-4fv (get-uniform sprite-program "view") view nil)
       (gl:uniform-matrix-4fv (get-uniform sprite-program "projection") proj nil))))
 
-
 (defun platformer-render-entities ()
   (do-map (id components *entities*)
     (declare (ignore id))
-    ;; (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
-    ;;            :size (vec2f (@ components :w) (@ components :h))
-    ;;            :color (@ components :color)
-    ;;            :draw-center (vec3f -0.5 0.5 0.0))
+    (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
+               :size (vec2f (@ components :w) (@ components :h))
+               :color (@ components :color)
+               :draw-center (vec3f -0.5 0.5 0.5))
     (sprite-draw (@ components :texture)
                  :position (vec3f (@ components :x) (@ components :y) (@ components :z))
                  :size (vec2f (@ components :w) (@ components :h))
                  :color (@ components :color)
+                 :rotate (vec3f 0.0 (cfloat (* 2 pi)) 0.0)
                  :draw-center (vec3f -0.5 0.5 0.0)
-                 :clip-position (vec2f 0.0 0.0)
-                 :clip-size (vec2f 0.0 0.0))))
+                 :clip-position (vec2f 11.0 128.0)
+                 :clip-size (vec2f 45.0 62.0))))
 
 (defun platformer-render-level ()
   (do-seq (components *platformer-level*)
@@ -228,7 +259,11 @@
                (format nil "x:~6f,  y:~6f, vx:~6f, vy:~6f, ax:~6f, ay:~6f"
                        (@ player :x) (@ player :y)
                        (@ player :velx) (@ player :vely)
-                       (@ player :accelx) (@ player :accely))))
+                       (@ player :accelx) (@ player :accely)))
+             (object-in-view (kit.glm:matrix*vec4
+                              (kit.glm:matrix* (get-view-matrix *camera*)
+                                               (kit.glm:translate* 0.0 0.0 -1.0))
+                              (vec4f 0.0 0.0 -1.0 1.0))))
         ;; (cube-draw :position (vec3f (@ player :x) (@ player :y) 0.0)
         ;;            :size (vec3f 1.0 1.0 1.0)
         ;;            :color (vec4f 0.0 0.0 1.0 1.0)
@@ -243,13 +278,20 @@
                      (get-font "sans24")
                      :draw-center (vec3f -0.5 -0.5 0.0)
                      :position (vec3f (cfloat (- *width* w)) (cfloat (- *height* h)) 0.0)
-                     :scale text-scale)))
+                     :scale text-scale))
+        (text-draw (format nil "~a ~a ~a"
+                           (x-val object-in-view)
+                           (y-val object-in-view)
+                           (z-val object-in-view))
+                   (get-font "sans24")
+                   :position (vec2f 0.0 100.0)
+                   :draw-center (vec3f -0.5 -0.5 0.0)))
 
       ;; fps
       (text-draw (format nil "~4f" (cfloat (average-fps)))
                  (get-font "sans24")
                  :position (vec3f 0.0 0.0 0.0)
-                 :scale (vec2f 1.0 1.0)
+                 :scale (vec2f 0.5 0.5)
                  :draw-center (vec3f -0.5 -0.5 0.0))
 
       (timer-reset render-timer))))
