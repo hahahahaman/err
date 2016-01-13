@@ -59,12 +59,14 @@ DRAWER is a rect-drawer object that by default is the global rect-drawer."
                   (kit.glm:translate position)
 
                   ;; move to draw center
-                  (kit.glm:translate* (cfloat (- (* (x-val draw-center)
-                                                    (x-val size))))
-                                      (cfloat (- (* (y-val draw-center)
-                                                    (y-val size))))
-                                      (cfloat (- (* (z-val draw-center)
-                                                    1.0))))
+                  (kit.glm:translate* (cfloat (* (x-val draw-center)
+                                                 (x-val size)
+                                                 -1.0))
+                                      (cfloat (* (y-val draw-center)
+                                                 (y-val size)
+                                                 -1.0))
+                                      (cfloat (* (z-val draw-center)
+                                                 -1.0)))
 
                   ;; move back from rotation center
                   (kit.glm:translate* (cfloat (* (x-val rotation-center)

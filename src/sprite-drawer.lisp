@@ -44,7 +44,7 @@
                       (position (vec3f 0.0 0.0 0.0))
                       (size (vec2f 10.0 10.0))
                       (color (vec4f 1.0 1.0 1.0 1.0))
-                      (rotate 0.0)
+                      (rotate (vec3f 0.0 0.0 0.0))
                       (rotation-center (vec3f 0.0 0.0 0.0))
                       (draw-center (vec3f 0.0 0.0 0.0))
                       (clip-position (vec2f 0.0 0.0))
@@ -63,12 +63,14 @@
                   (kit.glm:translate position)
 
                   ;; move to draw center
-                  (kit.glm:translate* (cfloat (- (* (x-val draw-center)
-                                                    (x-val size))))
-                                      (cfloat (- (* (y-val draw-center)
-                                                    (y-val size))))
-                                      (cfloat (- (* (z-val draw-center)
-                                                    1.0))))
+                  (kit.glm:translate* (cfloat (* (x-val draw-center)
+                                                 (x-val size)
+                                                 -1.0))
+                                      (cfloat (* (y-val draw-center)
+                                                 (y-val size)
+                                                 -1.0))
+                                      (cfloat (* (z-val draw-center)
+                                                 -1.0)))
 
                   ;; move back from rotation center
                   (kit.glm:translate* (cfloat (* (x-val rotation-center)
@@ -78,7 +80,7 @@
                                       (cfloat (* (z-val rotation-center)
                                                  1.0)))
                   ;; rotate around the z-axis
-                  (kit.glm:rotate* 0.0 0.0 (cfloat rotate))
+                  (kit.glm:rotate rotate)
                   ;; move to rotation center
                   (kit.glm:translate* (cfloat (* -1.0
                                                  (x-val rotation-center)
@@ -95,6 +97,7 @@
       ;; set model uniform
       (gl:uniform-matrix-4fv (get-uniform program "model") (vector model) nil))
 
+    ;; TODO Fix this
     ;; bind TEXTURE2D unless it is already bound
     ;; (unless (eql (id texture2d) current-texture-id)
     ;;   (gl:active-texture :texture0)
@@ -121,10 +124,10 @@
            (y (/ cposy height))
            (w (if (= 0.0 csizex)
                   (- 1.0 x)
-                  (/ (x-val clip-size) width)))
+                  (/ csizex width)))
            (h (if (= 0.0 csizey)
                   (- 1.0 y)
-                  (/ (y-val clip-size) height))))
+                  (/ csizey height))))
       (with-sequence-to-gl-array (verts
                                   ;;      Pos     Tex
                                   (vector -0.5 -0.5 x y
