@@ -41,7 +41,9 @@
                            (:accely 0.0)
                            (:max-velx 50.0)
                            (:max-vely 100.0)
-                           (:gravity t)))))
+                           (:gravity-p t)
+                           (:jump-p nil)
+                           (:face-right-p t)))))
   ;;platforms
   (setf *platformer-level* (-> *platformer-level*
                                (with-last (map (:x 0.0)
@@ -94,17 +96,21 @@
 
      ;; handle up and down movement
      (when up-p
-       (with! player :accely accel-rate))
+       (when (@ player :jump-p)
+         (with! player :vely 30.0)
+         (with! player :jump-p nil))
+       ;; (with! player :accely accel-rate)
+       )
      (when down-p
        (with! player :accely (- accel-rate)))
-     (when (and up-p down-p)
-       (with! player :accely 0.0))
-     (when (not (or up-p down-p))
-       (cond ((< (abs (@ player :vely)) 2.0)
-              (with! player :vely 0.0)
-              (with! player :accely 0.0))
-             (t (with! player :accely (* (- (signum (@ player :vely)))
-                                         accel-rate 5.0)))))
+     ;; (when (and up-p down-p)
+     ;;   (with! player :accely 0.0))
+     ;; (when (not (or up-p down-p))
+     ;;   (cond ((< (abs (@ player :vely)) 2.0)
+     ;;          (with! player :vely 0.0)
+     ;;          (with! player :accely 0.0))
+     ;;         (t (with! player :accely (* (- (signum (@ player :vely)))
+     ;;                                     accel-rate 5.0)))))
 
      ;; left and right movement
      (when right-p
@@ -149,13 +155,15 @@
                 (vely (@ components :vely))
                 (max-velx (@ components :max-velx))
                 (max-vely (@ components :max-vely))
+                (gravity-p (@ components :gravity-p))
                 (accelx (@ components :accelx))
                 (accely (@ components :accely))
                 ;; (max-accelx (@ components :max-accelx))
                 ;; (max-accely (@ components :max-accely))
                 (dt (timer-end update-timer)) ;; timestep
                 (accelx/2 (* accelx 0.5 dt))
-                (accely/2 (* accely 0.5 dt)))
+                (accely/2 (* (- accely (if gravity-p 50.0 0.0)) 0.5 dt))
+                (face-right-p (@ components :face-right-p)))
 
            ;; https://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
            ;; symplectic euler integration
@@ -170,22 +178,36 @@
            (setf velx (clampf velx (- max-velx) max-velx)
                  vely (clampf vely (- max-vely) max-vely))
 
-           (when (valid-move-p (+ x (* velx dt)) y w h)
-             (incf x (* velx dt)))
+           (cond ((valid-move-p (+ x (* velx dt)) y w h)
+                  (incf x (* velx dt)))
+                 (t (setf velx 0.0
+                          accelx 0.0
+                          accelx/2 0.0)))
 
-           (when (valid-move-p x (+ y (* vely dt)) w h)
-             (incf y (* vely dt)))
+           (cond  ((valid-move-p x (+ y (* vely dt)) w h)
+                   (incf y (* vely dt)))
+                  (t (setf vely 0.0
+                           accely 0.0
+                           accely/2 0.0)
+                     (with! components :jump-p t)))
 
            (incf velx accelx/2)
            (incf vely accely/2)
 
+
+           (cond ((> velx 0.0) (setf face-right-p t))
+                 ((< velx 0.0) (setf face-right-p nil)))
+
            ;; update values
            (setf components
                  (-> components
+                     (with :accelx accelx)
+                     (with :accely accely)
                      (with :velx velx)
                      (with :vely vely)
                      (with :x x)
-                     (with :y y))))
+                     (with :y y)
+                     (with :face-right-p face-right-p))))
 
          ;; update the entity
          (with! *entities* id components))))
@@ -220,23 +242,31 @@
 (defun platformer-render-entities ()
   (do-map (id components *entities*)
     (declare (ignore id))
-    (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
-               :size (vec2f (@ components :w) (@ components :h))
-               :color (@ components :color)
-               :draw-center (vec3f -0.5 0.5 0.5))
-    (sprite-draw (@ components :texture)
-                 :position (vec3f (@ components :x) (@ components :y) (@ components :z))
-                 :size (vec2f (@ components :w) (@ components :h))
-                 :color (@ components :color)
-                 :rotate (vec3f 0.0 (cfloat (* 2 pi)) 0.0)
-                 :draw-center (vec3f -0.5 0.5 0.0)
-                 :clip-position (vec2f 11.0 128.0)
-                 :clip-size (vec2f 45.0 62.0))))
+    (let ((x (@ components :x))
+          (y (@ components :y))
+          (z (@ components :z))
+          (w (@ components :w))
+          (h (@ components :h))
+          (color (@ components :color))
+          (face-right-p (@ components :face-right-p)))
+      (rect-draw :position (vec3f x y z)
+                 :size (vec2f w h)
+                 :color color
+                 :draw-center (vec3f -0.5 0.5 0.5))
+      (sprite-draw (@ components :texture)
+                   :position (vec3f x y z)
+                   :size (vec2f w h)
+                   :color color
+                   :rotate (vec3f 0.0 (if face-right-p (cfloat pi) 0.0) 0.0)
+                   :draw-center (vec3f -0.5 0.5 0.0)
+                   :clip-position (vec2f 11.0 128.0)
+                   :clip-size (vec2f 45.0 62.0)))))
 
 (defun platformer-render-level ()
   (do-seq (components *platformer-level*)
     (rect-draw :position (vec3f (@ components :x) (@ components :y) (@ components :z))
                :size (vec2f (@ components :w) (@ components :h))
+               :color (vec4f 0.0 0.5 0.2 1.0)
                :draw-center (vec3f -0.5 0.5 0.0))))
 
 (let ((render-timer (make-timer :end (/ 1.0 60.0))))
