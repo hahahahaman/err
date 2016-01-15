@@ -46,26 +46,34 @@
                            (:face-right-p t)))))
   ;;platforms
   (setf *platformer-level* (-> *platformer-level*
+                               ;; bottom
                                (with-last (map (:x 0.0)
                                                (:y 0.0)
                                                (:z 0.0)
-                                               (:w 100.0)
+                                               (:w 1000.0)
                                                (:h 5.0)))
+
+                               ;; left
                                (with-last (map (:x 0.0)
                                                (:y 100.0)
                                                (:z 0.0)
                                                (:w 5.0)
                                                (:h 100.0)))
+
+                               ;; top
                                (with-last (map (:x 0.0)
                                                (:y 100.0)
                                                (:z 0.0)
                                                (:w 100.0)
                                                (:h 5.0)))
-                               (with-last (map (:x 95.0)
-                                               (:y 95.0)
-                                               (:z 0.0)
-                                               (:w 5.0)
-                                               (:h 100.0))))))
+
+                               ;; right
+                               ;; (with-last (map (:x 95.0)
+                               ;;                 (:y 95.0)
+                               ;;                 (:z 0.0)
+                               ;;                 (:w 5.0)
+                               ;;                 (:h 100.0)))
+                               )))
 
 (let ((restart nil))
   (defun set-restart-window (&optional (value t))
@@ -92,11 +100,12 @@
           (down-p (or (key-pressed-p :s) (key-pressed-p :down)))
           (left-p (or (key-pressed-p :a) (key-pressed-p :left)))
           (right-p (or (key-pressed-p :d) (key-pressed-p :right)))
-          (accel-rate 10.0))
+          (accel-rate 10.0)
+          (jump-p (@ player :jump-p)))
 
      ;; handle up and down movement
      (when up-p
-       (when (@ player :jump-p)
+       (when jump-p
          (with! player :vely 30.0)
          (with! player :jump-p nil))
        ;; (with! player :accely accel-rate)
@@ -226,46 +235,46 @@
              ;; static
              ;; (setf position (vec3f 50.0 0.0 100.0))
 
-             ;; choppy motion
+             ;; focus player
              ;; (setf position (vec3f (@ player :x) (@ player :y) 100.0))
 
+             ;; adjust camera based on velocity of player
              ;; (incf (x-val position) (* velx dt))
              ;; (incf (y-val position) (* vely dt))
 
-
-             ;; better, faster camera movement causes camera to be stable quicker
-             ;; less stuttering of the camera
-             (let* ((x-forwardness ;;(* velx 1.3)
-                      (* (signum velx) w 3.0))
+             ;; focus a position ahead of the player
+             (let* ((x-forwardness velx)
                     (y-forwardness (* vely 1.3))
                     (x-diff (+ (- (+ x (/ w 2.0)) (x-val position))
                                x-forwardness))
                     (y-diff (+ (- (- y (/ h 2.0)) (y-val position))))
-                    (change 2.0))
+                    (change 1.5))
                (incf (x-val position) (* change x-diff dt))
                (incf (y-val position) (* change y-diff dt)))
              (setf (z-val position) 100.0)
-             (update-camera-vectors *camera*))))))
+             (update-camera-vectors *camera*)))
 
-    ;; update view matrices based on camera
-    (let ((cube-program (get-program "cube"))
-          (rect-program (get-program "rect"))
-          (sprite-program (get-program "sprite"))
-          (view (get-view-matrix *camera*))
-          (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
-                                            (cfloat (/ *width* *height*))
-                                            0.1 1000.0)))
-      (gl:use-program (id cube-program))
-      (gl:uniform-matrix-4fv (get-uniform cube-program "view") view nil)
-      (gl:uniform-matrix-4fv (get-uniform cube-program "projection") proj nil)
+         ;; gotta do this in sequence with the camera position change
+         ;; or else the movement will look choppy
+         ;; update view matrices based on camera
+         (let ((cube-program (get-program "cube"))
+               (rect-program (get-program "rect"))
+               (sprite-program (get-program "sprite"))
+               (view (get-view-matrix *camera*))
+               (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
+                                                 (cfloat (/ *width* *height*))
+                                                 0.1 1000.0)))
+           (gl:use-program (id cube-program))
+           (gl:uniform-matrix-4fv (get-uniform cube-program "view") view nil)
+           (gl:uniform-matrix-4fv (get-uniform cube-program "projection") proj nil)
 
-      (gl:use-program (id rect-program))
-      (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
-      (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil)
+           (gl:use-program (id rect-program))
+           (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
+           (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil)
 
-      (gl:use-program (id sprite-program))
-      (gl:uniform-matrix-4fv (get-uniform sprite-program "view") view nil)
-      (gl:uniform-matrix-4fv (get-uniform sprite-program "projection") proj nil))))
+           (gl:use-program (id sprite-program))
+           (gl:uniform-matrix-4fv (get-uniform sprite-program "view") view nil)
+           (gl:uniform-matrix-4fv (get-uniform sprite-program "projection") proj nil)))))))
 
 (defun platformer-render-entities ()
   (do-map (id components *entities*)
