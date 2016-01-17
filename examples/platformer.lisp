@@ -130,7 +130,7 @@
 
      (with! *entities* *platformer-player* player))))
 
-(defun valid-move-p (x y w h)
+(defun platformer-valid-move-p (x y w h)
   (let ((result t))
     (do-seq (components *platformer-level*)
       (when (rects-collide-p x y w h
@@ -181,13 +181,13 @@
              (setf velx (clampf velx (- max-velx) max-velx)
                    vely (clampf vely (- max-vely) max-vely))
 
-             (cond ((valid-move-p (+ x (* velx dt)) y w h)
+             (cond ((platformer-valid-move-p (+ x (* velx dt)) y w h)
                     (incf x (* velx dt)))
                    (t (setf velx 0.0
                             accelx 0.0
                             accelx/2 0.0)))
 
-             (cond  ((valid-move-p x (+ y (* vely dt)) w h)
+             (cond  ((platformer-valid-move-p x (+ y (* vely dt)) w h)
                      (incf y (* vely dt)))
                     (t (setf vely 0.0
                              accely 0.0
