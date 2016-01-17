@@ -75,3 +75,30 @@ Utility functions
                                       -1.0 1.0)))
       (gl:use-program (id text-program))
       (gl:uniform-matrix-4fv (get-uniform text-program "projection") proj nil))))
+
+(defun update-view-matrices ()
+  (let ((cube-program (get-program "cube"))
+        (rect-program (get-program "rect"))
+        (sprite-program (get-program "sprite"))
+        (view (get-view-matrix *camera*))
+        (proj (kit.glm:perspective-matrix (kit.glm:deg-to-rad (zoom *camera*))
+                                          (cfloat (/ *width* *height*))
+                                          0.1 1000.0)))
+    (gl:use-program (id cube-program))
+    (gl:uniform-matrix-4fv (get-uniform cube-program "view") view nil)
+    (gl:uniform-matrix-4fv (get-uniform cube-program "projection") proj nil)
+
+    (gl:use-program (id rect-program))
+    (gl:uniform-matrix-4fv (get-uniform rect-program "view") view nil)
+    (gl:uniform-matrix-4fv (get-uniform rect-program "projection") proj nil)
+
+    (gl:use-program (id sprite-program))
+    (gl:uniform-matrix-4fv (get-uniform sprite-program "view") view nil)
+    (gl:uniform-matrix-4fv (get-uniform sprite-program "projection") proj nil)))
+
+(defun rects-collide-p (x y w h ox oy ow oh)
+  "Rectangle collision check based on bottom left position of the rectangle."
+  (not (or (< (+ ox ow) x)
+           (> ox (+ x w))
+           (< oy (- y h))
+           (> (- oy oh) y))))
