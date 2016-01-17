@@ -4,13 +4,6 @@
 (defglobal *platformer-level* (empty-seq))
 (defglobal *platformer-gravity* 10.0)
 
-(defun rects-collide-p (x y w h ox oy ow oh)
-  "Rectangle collision check based on bottom left position of the rectangle."
-  (not (or (< (+ ox ow) x)
-           (> ox (+ x w))
-           (< oy (- y h))
-           (> (- oy oh) y))))
-
 ;; (defun move-entity (entity)
 ;;   "=> ENTITY (MAP)
 ;; Moves the entity, checking collision along the way."
@@ -307,7 +300,7 @@
                :color (vec4f 0.0 0.5 0.2 1.0)
                :draw-center (vec3f -0.5 0.5 0.0))))
 
-(let ((render-timer (make-timer :end (/ 1.0 65.0))))
+(let ((render-timer (make-timer :end (/ 1.0 60.0))))
   (defun platformer-render ()
     (timer-update render-timer)
     (when (timer-ended-p render-timer)
