@@ -7,8 +7,8 @@
 (defmethod timer-ended-p ((timer timer))
   (>= (timer-time timer) (timer-end timer)))
 
-(defmethod timer-update ((timer timer))
-  (incf (timer-time timer) *dt*))
+(defmethod timer-update ((timer timer) &optional (timescale 1.0))
+  (incf (timer-time timer) (* *dt* timescale)))
 
 (defmethod timer-reset ((timer timer))
   (setf (timer-time timer) 0.0))
