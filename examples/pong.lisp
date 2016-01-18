@@ -245,13 +245,14 @@
 
       (cond ((equalp *pong-state* +pong-game+)
              (pong-render-game)
-             (text-draw (format nil "~a ~a"
-                                (y-val (@ (@ *entities* *pong-paddle-left*)
-                                          :velocity))
-                                (y-val (@ (@ *entities* *pong-paddle-left*)
-                                          :acceleration)))
-                        (get-font "sans24")
-                        :position (vec2f 100.0 50.0))))
+             ;; (text-draw (format nil "~a ~a"
+             ;;                    (y-val (@ (@ *entities* *pong-paddle-left*)
+             ;;                              :velocity))
+             ;;                    (y-val (@ (@ *entities* *pong-paddle-left*)
+             ;;                              :acceleration)))
+             ;;            (get-font "sans24")
+             ;;            :position (vec2f 100.0 50.0))
+             ))
 
       ;; fps
       (text-draw (format nil "~4f" (average-fps))
