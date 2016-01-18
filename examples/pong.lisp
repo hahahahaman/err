@@ -18,7 +18,7 @@
 (defglobal *pong-walls* (empty-seq))
 
 (defglobal *pong-screen-width* 100.0)
-(defglobal *pong-screen-height 100.0)
+(defglobal *pong-screen-height* 100.0)
 
 (defun make-rect (position size &key (color (vec4f 1.0 1.0 1.0 1.0)))
   (map (:position position)
@@ -65,10 +65,12 @@
          (l2 3.0) ;; length 2
          (gap l2)
          (screen-w *pong-screen-width*)
-         (screen-h *pong-screen-height))
+         (screen-h *pong-screen-height*))
 
     ;; paddle starting positions
-    (setf *pong-paddle-top* (add-entity (make-movable-rect
+    (setf *entities* (empty-map)
+
+          *pong-paddle-top* (add-entity (make-movable-rect
                                          (vec3f (- (/ screen-w 2.0) (/ l1 2.0))
                                                 (- screen-h gap)
                                                 0.0)
@@ -94,7 +96,7 @@
                                               0.0)
                                        (vec2f l2 l2)
                                        :collision-type 'ball)
-                                      (with :max-velocity (vec2f 100.0 100.0))
+                                      (with :max-velocity (vec2f 1000.0 1000.0))
                                       (with :moving-p nil))))
     (setf *pong-walls* (make-border (vec3f (- gap) (+ screen-h gap) 0.0)
                                     (vec2f (+ screen-w (* 2 gap)) (+ screen-h (* 2 gap)))
@@ -121,6 +123,7 @@
                 (right (@ *entities* *pong-paddle-right*))
                 (top (@ *entities* *pong-paddle-top*))
                 (bot (@ *entities* *pong-paddle-bot*))
+                (ball (@ *entities* *pong-ball*))
                 (up-p (or (key-pressed-p :w) (key-pressed-p :up)))
                 (down-p (or (key-pressed-p :s) (key-pressed-p :down)))
                 (left-p (or (key-pressed-p :a) (key-pressed-p :left)))
@@ -129,7 +132,10 @@
                 (left-vel (@ left :velocity))
                 (top-accel (@ top :acceleration))
                 (top-vel (@ top :velocity))
-                (accel-rate 10.0))
+                (ball-vel (@ ball :velocity))
+                (ball-accel (@ ball :acceleration))
+                (ball-moving-p (@ ball :moving-p))
+                (accel-rate 20.0))
            (when up-p
              (setf (y-val left-accel) accel-rate))
            (when down-p
@@ -152,6 +158,15 @@
                    (t (setf (x-val top-accel) (* (- (signum (x-val top-vel)))
                                                  accel-rate 5.0)))))
 
+           (unless ball-moving-p
+             (when (key-pressed-p :space)
+               (let* ((arate (/ accel-rate 2.0))
+                      (x (cfloat (random-in-range 0.0 arate)))
+                      (y (cfloat (- arate x))))
+                 (setf ball-accel (vec2f x y)
+                       ball-vel (vec2f x y)
+                       ball-moving-p t))))
+
            (setf left (-> left
                           (with :acceleration left-accel)
                           (with :velocity left-vel))
@@ -163,13 +178,20 @@
                          (with :velocity top-vel))
                  bot (-> bot
                          (with :acceleration top-accel)
-                         (with :velocity top-vel)))
+                         (with :velocity top-vel))
+                 ball (-> ball
+                          (with :velocity ball-vel)
+                          (with :acceleration ball-accel)
+                          (with :moving-p ball-moving-p)))
 
-           (setf *entities* (-> *entities*
-                                (with *pong-paddle-bot* bot)
-                                (with *pong-paddle-left* left)
-                                (with *pong-paddle-right* right)
-                                (with *pong-paddle-top* top)))))))
+           (add-event
+            :code
+            (setf *entities* (-> *entities*
+                                 (with *pong-paddle-bot* bot)
+                                 (with *pong-paddle-left* left)
+                                 (with *pong-paddle-right* right)
+                                 (with *pong-paddle-top* top)
+                                 (with *pong-ball* ball))))))))
 
 (defun pong-render-game ()
   (with-slots (position) *camera*
@@ -243,8 +265,7 @@
 (defun pong-valid-move-p (position size entity-id)
   "=> BOOLEAN, OBJECT, ID"
   (let ((valid-p t)
-        (obj)
-        (collide-id))
+        (obj))
     (block col-loop
       (do-seq (wall *pong-walls*)
         (let* ((pos (@ wall :position))
@@ -272,10 +293,9 @@
                                    (x-val size) (y-val size)
                                    x y w h)
               (setf valid-p nil
-                    obj comps
-                    collide-id id)
+                    obj comps)
               (return-from col-loop))))))
-    (values valid-p obj collide-id)))
+    (values valid-p obj)))
 
 (defun pong-update-game (dt)
   (do-map (id comps *entities*)
@@ -286,7 +306,8 @@
            (accel (@ comps :acceleration))
            (accel/2 (vec2f* accel (* 0.5 dt)))
            (col-type (@ comps :collision-type))
-           (color (@ comps :color)))
+           (color (@ comps :color))
+           (game-reload-p nil))
       (setf
        ;; add half acceleration
        vel (vec2f+ vel accel/2)
@@ -296,31 +317,78 @@
 
       ;; add velocity to position
       ;; x pass
-      (let ((move-x (vec3f+ pos (vec3f (* (x-val vel) dt) 0.0 0.0))))
-        (multiple-value-bind (valid-move-p object object-id)
-            (pong-valid-move-p move-x size id)
-          (cond (valid-move-p
-                 (setf color (vec4f 0.2 0.5 0.6 0.6))
-                 (setf pos move-x))
-                (t
-                 (setf color (vec4f 0.5 0.1 0.1 1.0))
-                 (let ((obj-col-type (@ object :collision-type)))
-                   (cond
-                     ;;paddle-wall
-                     ((and (equalp col-type 'paddle) (equalp obj-col-type 'wall))
-                      (setf vel (vec2f 0.0 0.0)
-                            accel (vec2f 0.0 0.0)
-                            accel/2 (vec2f 0.0 0.0)
-                            ;; color (vec4f 1.0 0.0 0.0 0.5)
-                            ))
-                     ;;paddle-ball
-                     ;;ball-wall
-                     (t
-                      (setf pos move-x))))))))
-      ;; y pass
-      (let ((move-y (vec3f+ pos (vec3f 0.0 (* (y-val vel) dt) 0.0))))
-        (cond ((pong-valid-move-p move-y size id)
-               (setf pos move-y))))
+      (flet ((paddle-wall ()
+               (setf vel (vec2f 0.0 0.0)
+                     accel (vec2f 0.0 0.0)
+                     accel/2 (vec2f 0.0 0.0)
+                     ))
+             (ball-paddle (x-pass-p)
+               (incf *pong-score*)
+               (if x-pass-p
+                   (setf (x-val vel) (- (x-val vel))
+                         (x-val accel) (- (x-val accel)))
+                   (setf (y-val vel) (- (y-val vel))
+                         (y-val accel) (- (y-val accel)))))
+             (ball-wall ()
+               (setf *pong-score* 0
+                     game-reload-p t)
+               ))
+        (let ((move-x (vec3f+ pos (vec3f (* (x-val vel) dt) 0.0 0.0))))
+          (multiple-value-bind (valid-move-p object)
+              (pong-valid-move-p move-x size id)
+            (cond (valid-move-p
+                   (setf color (vec4f 0.2 0.5 0.6 0.6))
+                   (setf pos move-x))
+                  (t
+                   (setf color (vec4f 1.0 1.0 1.0 1.0))
+                   (let ((obj-col-type (@ object :collision-type))
+                         ;; (obj-vel (@ object :velocity))
+                         ;; (obj-accel (@ object :acceleration))
+                         )
+                     (cond
+                       ;; paddle-wall
+                       ((and (equalp col-type 'paddle) (equalp obj-col-type 'wall))
+                        (paddle-wall))
+                       ;;;ball-paddle
+                       ((and (equalp col-type 'ball) (equalp obj-col-type 'paddle))
+                        (ball-paddle t))
+                       ;; paddle-ball
+                       ((and (equalp col-type 'paddle) (equalp obj-col-type 'ball))
+                        ;; do nothing
+                        )
+                       ;;ball-wall
+                       ((and (equalp col-type 'ball) (equalp obj-col-type 'wall))
+                        (ball-wall))
+                       (t
+                        (setf pos move-x))))))))
+        ;; y pass
+        (let ((move-y (vec3f+ pos (vec3f 0.0 (* (y-val vel) dt) 0.0))))
+          (multiple-value-bind (valid-move-p object)
+              (pong-valid-move-p move-y size id)
+            (cond (valid-move-p
+                   (setf color (vec4f 0.2 0.5 0.6 0.6))
+                   (setf pos move-y))
+                  (t
+                   (let ((obj-col-type (@ object :collision-type))
+                         ;; (obj-vel (@ object :velocity))
+                         ;; (obj-accel (@ object :acceleration))
+                         )
+                     (cond
+                       ;;paddle-wall
+                       ((and (equalp col-type 'paddle) (equalp obj-col-type 'wall))
+                        (paddle-wall))
+                       ;;ball-paddle
+                       ((and (equalp col-type 'ball) (equalp obj-col-type 'paddle))
+                        (ball-paddle nil))
+                       ;;paddle-ball
+                       ((and (equalp col-type 'paddle) (equalp obj-col-type 'ball))
+                        ;; do nothing
+                        )
+                       ;;ball-wall
+                       ((and (equalp col-type 'ball) (equalp obj-col-type 'wall))
+                        (ball-wall))
+                       (t
+                        (setf pos move-y)))))))))
 
       (setf
        ;; more acceleration
@@ -331,13 +399,15 @@
                  (with :color color)
                  (with :accel accel)
                  (with :position pos)
-                 (with :velocity vel))))
+                 (with :velocity vel)))
 
-    ;; update entities
+      ;; update entities
 
-    (add-event
-     :code
-     (with! *entities* id comps))))
+      (add-event
+       :code
+       (with! *entities* id comps))
+      (when game-reload-p
+        (add-event :code (pong-game-init))))))
 
 (let ((update-timer (make-timer :end (/ 1.0 100.0))))
   (defun pong-update ()
