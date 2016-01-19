@@ -2,3 +2,5 @@
 * TODO improve render speed with instanced rendering or batch rendering (send lots of data through the vbo
 * DONE add macro that optimizes vec operations
 CLOSED: [2016-01-02 Sat 19:38]
+* TODO add some cffi stuff that will add the current directory to the foreign library search path
+* TODO Sound, probably OPENAL.
