@@ -105,7 +105,8 @@
       (text-draw (format nil "~4f" (cfloat (average-fps)))
                  (get-font "sans24")
                  :position (vec2 1.0 3.0)
-                 :scale (vec2 0.7 0.7)))))
+                 :scale (vec2 0.7 0.7)
+                 :draw-center (vec3f -0.5 -0.5 0.0)))))
 
 (declaim (ftype (function (vec3 vec3) vec3) vec3-to))
 (defun vec3-to (a b)
