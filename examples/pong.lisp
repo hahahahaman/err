@@ -160,10 +160,11 @@
 
            (unless ball-moving-p
              (when (key-pressed-p :space)
-               (let* ((arate (/ accel-rate 2.0))
-                      (x (cfloat (random-in-range 0.0 arate)))
-                      (y (cfloat (- arate x))))
-                 (setf ball-accel (vec2f x y)
+               (let* ((start-vel 10.0)
+                      (x (cfloat (random-in-range (- start-vel) start-vel)))
+                      (diff (- (abs start-vel) (abs x)))
+                      (y (cfloat (random-in-range (- diff) diff))))
+                 (setf ball-accel (vec2f/ (vec2f x y) (/ start-vel 2.0))
                        ball-vel (vec2f x y)
                        ball-moving-p t))))
 
@@ -244,15 +245,7 @@
       (gl:clear :color-buffer-bit :depth-buffer-bit)
 
       (cond ((equalp *pong-state* +pong-game+)
-             (pong-render-game)
-             ;; (text-draw (format nil "~a ~a"
-             ;;                    (y-val (@ (@ *entities* *pong-paddle-left*)
-             ;;                              :velocity))
-             ;;                    (y-val (@ (@ *entities* *pong-paddle-left*)
-             ;;                              :acceleration)))
-             ;;            (get-font "sans24")
-             ;;            :position (vec2f 100.0 50.0))
-             ))
+             (pong-render-game)))
 
       ;; fps
       (text-draw (format nil "~4f" (average-fps))
@@ -321,19 +314,23 @@
       (flet ((paddle-wall ()
                (setf vel (vec2f 0.0 0.0)
                      accel (vec2f 0.0 0.0)
-                     accel/2 (vec2f 0.0 0.0)
-                     ))
+                     accel/2 (vec2f 0.0 0.0)))
              (ball-paddle (x-pass-p)
                (incf *pong-score*)
+               (setf vel (vec2f+ vel (vec2f (* (signum (x-val vel)) 1.0)
+                                            (* (signum (y-val vel)) 1.0)))
+                     vel (vec2f (* (signum (x-val vel)) (abs (y-val vel)))
+                                (* (signum (y-val vel)) (abs (x-val vel)))))
                (if x-pass-p
                    (setf (x-val vel) (- (x-val vel))
-                         (x-val accel) (- (x-val accel)))
+                         (x-val accel) (- (x-val accel))
+                         (x-val accel/2) (- (x-val accel/2)))
                    (setf (y-val vel) (- (y-val vel))
-                         (y-val accel) (- (y-val accel)))))
+                         (y-val accel) (- (y-val accel))
+                         (y-val accel/2) (- (y-val accel/2)))))
              (ball-wall ()
                (setf *pong-score* 0
-                     game-reload-p t)
-               ))
+                     game-reload-p t)))
         (let ((move-x (vec3f+ pos (vec3f (* (x-val vel) dt) 0.0 0.0))))
           (multiple-value-bind (valid-move-p object)
               (pong-valid-move-p move-x size id)
@@ -370,6 +367,7 @@
                    (setf color (vec4f 0.2 0.5 0.6 0.6))
                    (setf pos move-y))
                   (t
+                   (setf color (vec4f 1.0 1.0 1.0 1.0))
                    (let ((obj-col-type (@ object :collision-type))
                          ;; (obj-vel (@ object :velocity))
                          ;; (obj-accel (@ object :acceleration))
