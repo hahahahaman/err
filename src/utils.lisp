@@ -106,17 +106,16 @@ Remember to free gl-array afterwards."
 
 (defun random-in-range (start end)
   "Random number between start and end, inclusive."
-  (assert (and (<= 0.0 start)
-               (<= 0.0 end))
-          nil
-          "RANDOM-IN-RANGE: START and END must be positive")
   (if (> start end)
       (random-in-range end start)
       (+ start
          (let* ((diff (- end start))
                 (randy (random (+ diff
+                                  ;; increase limit if numbers are integers
+                                  ;; to include end
                                   (if (integerp diff) 1 0)))))
            (if (floatp randy)
+               ;; round randy to diff in case it is super close to diff
                (if (<= (- diff randy) single-float-epsilon)
                    diff
                    randy)
