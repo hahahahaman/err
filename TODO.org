@@ -5,3 +5,4 @@ CLOSED: [2016-01-02 Sat 19:38]
 * TODO add some cffi stuff that will add the current directory to the foreign library search path
 * TODO Sound, probably OPENAL.
 * TODO Unit Tests? QuickCheck? (like the Haskell library)
+* TODO Macro for assigning all values of a map to local variables
