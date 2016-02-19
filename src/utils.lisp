@@ -40,11 +40,9 @@ Average time change over a few hundred frames."
 ;;;;;;;;;;;;;;;;;
 
 (defun update-dt ()
-  "Called in the main loop, updates time globals."
+  "Updates time globals."
   (setf *dt* (- (glfw:get-time) *previous-time*)
         *previous-time* (glfw:get-time))
-
-  ;; (incf *total-frames*)
 
   ;; prevent unruly time steps from breaking game
   (setf *dt* (max 0.0d0 (min 0.25d0 *dt*))))
@@ -236,11 +234,11 @@ Remember to free gl-array afterwards."
   (image (lambda (x) (cdr x)) (convert to-type map)))
 
 ;; destructive fset stuff
-
-(defmacro with! (collection value1 &optional value2)
-  `(setf ,collection (with ,collection ,value1 ,value2)))
-(defmacro less! (collection value1 &optional value2)
-  `(setf ,collection (less ,collection ,value1 ,value2)))
+;; fset comes with these already
+;; (defmacro with! (collection value1 &optional value2)
+;;   `(setf ,collection (with ,collection ,value1 ,value2)))
+;; (defmacro less! (collection value1 &optional value2)
+;;   `(setf ,collection (less ,collection ,value1 ,value2)))
 
 ;;;
 ;;; Garbage Collection
@@ -294,3 +292,59 @@ Checks if two checksums are equal."
         (<= (+ y height) o-top)
         (<= (+ x width) o-left)
         (<= (+ o-left o-width) x))))
+
+(defun err-sleep (time)
+  "Stops the program from running for TIME seconds."
+  (sleep time))
+
+(defun file-in-dir (directory-path file)
+  (cl-fad:merge-pathnames-as-file (pathname directory-path) (pathname file)))
+
+(defun init-managers ()
+  (setf *program-manager* (make-instance 'program-manager)
+        *texture-manager* (make-instance 'texture-manager)
+        *font-manager* (make-instance 'font-manager)))
+
+(defun set-program-matrices (program
+                             &key
+                               (view (get-view-matrix *camera*))
+                               (projection (kit.glm:perspective-matrix
+                                            (kit.glm:deg-to-rad (zoom *camera*))
+                                            (cfloat (/ *width* *height*))
+                                            0.1 1000.0)))
+  (gl:use-program (id program))
+  (when view
+    (gl:uniform-matrix-4fv (get-uniform program "view") view nil))
+  (when projection
+    (gl:uniform-matrix-4fv (get-uniform program "projection") projection nil)))
+
+(defun initialize-shaders (shader-directory)
+  (init-managers)
+
+  (flet ((file-from-shader-dir (file)
+           (file-in-dir shader-directory file)))
+    (let ((text-program (make-program (file-from-shader-dir "text.v.glsl")
+                                      (file-from-shader-dir "text.f.glsl")))
+          (cube-program (make-program (file-from-shader-dir "cube.v.glsl")
+                                      (file-from-shader-dir "cube.f.glsl")))
+          (rect-program (make-program (file-from-shader-dir "rect.v.glsl")
+                                      (file-from-shader-dir "rect.f.glsl")))
+          (sprite-program (make-program (file-from-shader-dir "sprite.v.glsl")
+                                        (file-from-shader-dir "sprite.f.glsl"))))
+
+      (setf *text-drawer* (make-instance 'text-drawer :program text-program)
+            *cube-drawer* (make-instance 'cube-drawer :program cube-program)
+            *rect-drawer* (make-instance 'rect-drawer :program rect-program)
+            *sprite-drawer* (make-instance 'sprite-drawer :program sprite-program)
+            *camera* (make-instance 'camera :position (vec3f 0.0 0.0 100.0)
+                                            :movement-speed 10.0))
+
+      (load-program "text" text-program)
+      (load-program "cube" cube-program)
+      (load-program "rect" rect-program)
+      (load-program "sprite" sprite-program)
+
+      (set-program-matrices cube-program)
+      (set-program-matrices rect-program)
+      (set-program-matrices sprite-program)
+      (set-program-matrices text-program :view nil))))

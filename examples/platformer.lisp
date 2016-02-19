@@ -99,36 +99,36 @@
      ;; handle up and down movement
      (when up-p
        (when jump-p
-         (with! player :vely 30.0)
-         (with! player :jump-p nil))
-       ;; (with! player :accely accel-rate)
+         (includef player :vely 30.0)
+         (includef player :jump-p nil))
+       ;; (includef player :accely accel-rate)
        )
      (when down-p
-       (with! player :accely (- accel-rate)))
+       (includef player :accely (- accel-rate)))
      ;; (when (and up-p down-p)
-     ;;   (with! player :accely 0.0))
+     ;;   (includef player :accely 0.0))
      ;; (when (not (or up-p down-p))
      ;;   (cond ((< (abs (@ player :vely)) 2.0)
-     ;;          (with! player :vely 0.0)
-     ;;          (with! player :accely 0.0))
-     ;;         (t (with! player :accely (* (- (signum (@ player :vely)))
+     ;;          (includef player :vely 0.0)
+     ;;          (includef player :accely 0.0))
+     ;;         (t (includef player :accely (* (- (signum (@ player :vely)))
      ;;                                     accel-rate 5.0)))))
 
      ;; left and right movement
      (when right-p
-       (with! player :accelx accel-rate))
+       (includef player :accelx accel-rate))
      (when left-p
-       (with! player :accelx (- accel-rate)))
+       (includef player :accelx (- accel-rate)))
      (when (and left-p right-p)
-       (with! player :accelx 0.0))
+       (includef player :accelx 0.0))
      (when (not (or right-p left-p))
        (cond ((< (abs (@ player :velx)) 2.0)
-              (with! player :velx 0.0)
-              (with! player :accelx 0.0))
-             (t (with! player :accelx (* (- (signum (@ player :velx)))
+              (includef player :velx 0.0)
+              (includef player :accelx 0.0))
+             (t (includef player :accelx (* (- (signum (@ player :velx)))
                                          accel-rate 5.0)))))
 
-     (with! *entities* *platformer-player* player))))
+     (includef *entities* *platformer-player* player))))
 
 (defun platformer-valid-move-p (x y w h)
   (let ((result t))
@@ -192,7 +192,7 @@
                     (t (setf vely 0.0
                              accely 0.0
                              accely/2 0.0)
-                       (with! components :jump-p t)))
+                       (includef components :jump-p t)))
 
              (incf velx accelx/2)
              (incf vely accely/2)
@@ -212,7 +212,7 @@
                        (with :face-right-p face-right-p))))
 
            ;; update the entity
-           (with! *entities* id components))
+           (includef *entities* id components))
 
          ;; update camera
          (let* ((player (@ *entities* *platformer-player*))

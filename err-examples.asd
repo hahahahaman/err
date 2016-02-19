@@ -1,7 +1,7 @@
 ;;;; err-examples.asd
 
 (asdf:defsystem #:err-examples
-  :description "some examples"
+  :description "Some examples of err."
   :author "Ed Ye"
   :license "Licenseless Rider"
   :depends-on (#:err)

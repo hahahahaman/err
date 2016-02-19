@@ -8,19 +8,19 @@
 
 (defclass camera ()
   ((position
-    :type vec3
+    :type vec3f
     :initarg :position)
    (front
-    :type vec3
+    :type vec3f
     :initarg :front)
    (up
-    :type vec3
+    :type vec3f
     :initarg :up)
    (right
-    :type vec3
+    :type vec3f
     :initarg :right)
    (world-up
-    :type vec3
+    :type vec3f
     :initarg :world-up)
    (yaw
     :type single-float
@@ -39,9 +39,9 @@
     :reader zoom
     :initarg :zoom))
   (:default-initargs
-   :position (vec3 0.0 0.0 0.0)
-   :front (vec3 0.0 0.0 -1.0)
-   :world-up (vec3 0.0 1.0 0.0)
+   :position (vec3f 0.0 0.0 0.0)
+   :front (vec3f 0.0 0.0 -1.0)
+   :world-up (vec3f 0.0 1.0 0.0)
    :yaw -90.0
    :pitch 0.0
    :movement-speed 3.0
@@ -53,20 +53,21 @@
 
 (defmethod get-view-matrix ((cam camera))
   (with-slots (position front up) cam
-    (kit.glm:look-at position (kit.glm:vec+ position front) up)))
+    (kit.glm:look-at position (vec3f+ position front) up)))
 
 (defmethod process-direction-movement ((cam camera) direction dt)
   (with-slots (movement-speed front right position) cam
     (let ((velocity (cfloat (* movement-speed dt)))
-          (original-y (y-val position)))
+          ;; (original-y (y-val position))
+          )
       (cond ((eql direction +forward+)
-             (setf position (kit.glm:vec+ position (kit.glm:vec* front velocity))))
+             (setf position (vec3f+ position (vec3f* front velocity))))
             ((eql direction +backward+)
-             (setf position (kit.glm:vec- position (kit.glm:vec* front velocity))))
+             (setf position (vec3f- position (vec3f* front velocity))))
             ((eql direction +left+)
-             (setf position (kit.glm:vec- position (kit.glm:vec* right velocity))))
+             (setf position (vec3f- position (vec3f* right velocity))))
             ((eql direction +right+)
-             (setf position (kit.glm:vec+ position (kit.glm:vec* right velocity))))))))
+             (setf position (vec3f+ position (vec3f* right velocity))))))))
 
 (defmethod process-rotation-movement ((cam camera) x y &optional (constrain-pitch t))
   (with-slots (mouse-sensitivity yaw pitch) cam
@@ -95,11 +96,11 @@
   (with-slots (yaw pitch right up front world-up) cam
     (let* ((yaw (kit.glm:deg-to-rad yaw))
            (pitch (kit.glm:deg-to-rad pitch))
-           (new-front (vec3 (cfloat (* (cos yaw)
-                                       (cos pitch)))
-                            (cfloat (sin pitch))
-                            (cfloat (* (sin yaw)
-                                       (cos pitch))))))
+           (new-front (vec3f (cfloat (* (cos yaw)
+                                        (cos pitch)))
+                             (cfloat (sin pitch))
+                             (cfloat (* (sin yaw)
+                                        (cos pitch))))))
       (setf front (kit.glm:normalize new-front)
             right (kit.glm:normalize (kit.glm:cross-product front world-up))
             up (kit.glm:normalize (kit.glm:cross-product right front))))))

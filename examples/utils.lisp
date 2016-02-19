@@ -29,7 +29,7 @@ Utility functions
           *cube-drawer* (make-instance 'cube-drawer :program cube-program)
           *rect-drawer* (make-instance 'rect-drawer :program rect-program)
           *sprite-drawer* (make-instance 'sprite-drawer :program sprite-program)
-          *camera* (make-instance 'camera :position (vec3 0.0 0.0 100.0)
+          *camera* (make-instance 'camera :position (vec3f 0.0 0.0 100.0)
                                           :movement-speed 10.0))
 
     (load-program "text" text-program)

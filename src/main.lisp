@@ -1,12 +1,17 @@
 (in-package #:err)
 
-(defmacro run (title
-               &key
-                 init-code
-                 input-code
-                 render-code
-                 update-code
-                 cleanup-code)
+(defmacro err-run (title
+                   &key
+                     init-code
+                     input-code
+                     render-code
+                     update-code
+                     cleanup-code)
+  ;; In case the OS's default library search algorithm cannot find
+  ;; the correct libraries, libraries will be provided
+  ;; not sure how this works
+  ;; (pushnew #P"./" *foreign-library-directories*
+  ;;          :test #'equal)
   "Generic game loop code."
   `(block nil
      (glfw:with-init-window (:title ,title
@@ -37,7 +42,7 @@
        (glfw:set-mouse-button-callback 'mouse-callback)
        (glfw:set-cursor-position-callback 'cursor-callback)
        (glfw:set-scroll-callback 'scroll-callback)
-       ;; (glfw:set-input-mode :cursor :disabled)
+       ;; (glfw:set-input-mode :cursor :disabled) ;; hides cursor
 
        (iter (until (glfw:window-should-close-p))
          (update-swank)

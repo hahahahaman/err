@@ -6,3 +6,4 @@ CLOSED: [2016-01-02 Sat 19:38]
 * TODO Sound, probably OPENAL.
 * TODO Unit Tests? QuickCheck? (like the Haskell library)
 * TODO Macro for assigning all values of a map to local variables
+* TODO make new project that makes err projects

@@ -6,6 +6,7 @@
   :license "Licenseless Rider"
   :depends-on (#:alexandria
                #:iterate
+               #:cl-fad
                #:cl-glfw3
                #:cl-opengl
                #:cl-soil

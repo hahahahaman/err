@@ -32,7 +32,6 @@ the shader did not compile an error is called."
     (gl:compile-shader shader)
 
     (%gl:get-shader-iv shader :compile-status status)
-    ;; (format t "compile-status: ~a~%"(cffi:mem-ref status :int))
 
     ;; 1 means success
     (if (not (= (cffi:mem-ref status :int) 1))

@@ -7,7 +7,7 @@ development, but it's still young and convoluted.
 
 ### Example
 
-Currently an Opengl window can be opened like this:
+Currently an Opengl window can be opened with this:
 
 ```lisp
 (defun initialize ())
@@ -25,7 +25,7 @@ Currently an Opengl window can be opened like this:
            :cleanup-code (cleanup)))
 ```
 
-See [added-text](https://github.com/hahahahaman/added-text) for a working project.
+See examples folder for some basic projects.
 
 ### Installation
 
@@ -38,6 +38,7 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
 2. Get dependencies, either through quicklisp or from their repositories.
   * [alexandria](https://common-lisp.net/project/alexandria/)
   * [iterate](https://common-lisp.net/project/iterate/)
+  * [cl-fad](http://weitz.de/cl-fad/)
   * [cl-glfw3](https://github.com/AlexCharlton/cl-glfw3)
   * [cl-opengl](https://github.com/3b/cl-opengl)
   * [glkit](https://github.com/lispgames/glkit)
@@ -45,7 +46,6 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   * [fest](https://github.com/slburson/fset)
   * [defenum](http://defenum.sourceforge.net/)
   * [ironclad](http://method-combination.net/lisp/ironclad/)
-  * swank (part of [slime](https://common-lisp.net/project/slime/))
 
    Not in quicklisp (get from their repositories):
       * [cl-soil](https://github.com/cbaggers/cl-soil)
@@ -59,8 +59,6 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   $ git clone https://github.com/hahahahaman/err
   ```
 
-  Something I like to do instead of step 4 is clone the project into
-  ~/quicklisp/local-projects/ then
 4. add ASD project file
 
   Add the relative path of the asd file into system-index.txt (also in the
