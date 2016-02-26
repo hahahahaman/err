@@ -419,7 +419,7 @@
 (defun pong-cleanup ())
 
 (defun pong ()
-  (err:run "pong"
+  (err-run "pong"
            :init-code (pong-init)
            :input-code (pong-input)
            :render-code (pong-render)

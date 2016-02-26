@@ -364,7 +364,7 @@
 (defun platformer-cleanup ())
 
 (defmacro platformer-start ()
-  `(err:run "platformer"
+  `(err-run "platformer"
             :init-code (platformer-init)
             :input-code (platformer-handle-input)
             :render-code (platformer-render)

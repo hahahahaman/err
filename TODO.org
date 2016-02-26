@@ -1,4 +1,5 @@
-* TODO add center-mode parameters for draw functions
+* DONE add center-mode parameters for draw functions
+CLOSED: [2016-02-19 Fri 08:27]
 * TODO improve render speed with instanced rendering or batch rendering (send lots of data through the vbo
 * DONE add macro that optimizes vec operations
 CLOSED: [2016-01-02 Sat 19:38]
@@ -6,4 +7,6 @@ CLOSED: [2016-01-02 Sat 19:38]
 * TODO Sound, probably OPENAL.
 * TODO Unit Tests? QuickCheck? (like the Haskell library)
 * TODO Macro for assigning all values of a map to local variables
-* TODO make new project that makes err projects
+* DONE make new project that makes err projects
+CLOSED: [2016-02-19 Fri 08:27]
+my-qp uses html-template to do this.

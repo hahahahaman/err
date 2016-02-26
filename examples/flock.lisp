@@ -235,7 +235,7 @@
 (defun flock-cleanup-code ())
 
 (defmacro start-flock ()
-  `(err:run "flock"
+  `(err-run "flock"
             :init-code (flock-init)
             :input-code (flock-handle-input)
             :render-code (flock-render)
