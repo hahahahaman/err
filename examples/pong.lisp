@@ -404,7 +404,7 @@
 
       (add-event
        :code
-       (with! *entities* id comps))
+       (includef *entities* id comps))
       (when game-reload-p
         (add-event :code (pong-game-init))))))
 

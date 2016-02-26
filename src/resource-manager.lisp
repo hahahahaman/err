@@ -23,7 +23,7 @@
   (@ (resources manager) name))
 
 (defmethod load-resource (name resource (manager resource-manager))
-  (with! (resources manager) name resource))
+  (includef (resources manager) name resource))
 
 (defmethod clear-resources :after ((manager resource-manager))
   (setf (resources manager) (empty-map)))

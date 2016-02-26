@@ -35,11 +35,11 @@
             (gl:tex-parameter :texture-2d :texture-min-filter :linear)
             (gl:tex-parameter :texture-2d :texture-mag-filter :linear)
 
-            (with! text-chars (code-char c)
-                   (make-text-char :texture-id texture
-                                   :size (vec2i width rows)
-                                   :bearing (vec2i left top)
-                                   :advance advance)))))
+            (includef text-chars (code-char c)
+                      (make-text-char :texture-id texture
+                                      :size (vec2i width rows)
+                                      :bearing (vec2i left top)
+                                      :advance advance)))))
       (gl:bind-texture :texture-2d 0)
 
       (load-resource name text-chars manager))))

@@ -12,16 +12,16 @@
 (defun create-boid ()
   (let* ((lo (car *boundary*))
          (hi (cdr *boundary*))
-         (size (vec3 1.0 1.0 1.0))
+         (size (vec3f 1.0 1.0 1.0))
          (vel-range 10.0)
          (neg-vel-range (- vel-range))
-         (pos (vec3 (random-in-range lo hi)
-                    (random-in-range lo hi)
-                    (random-in-range lo hi)))
-         (vel (vec3 (random-in-range neg-vel-range vel-range)
-                    (random-in-range neg-vel-range vel-range)
-                    (random-in-range neg-vel-range vel-range)))
-         (accel (vec3 0.0 0.0 0.0)))
+         (pos (vec3f (random-in-range lo hi)
+                     (random-in-range lo hi)
+                     (random-in-range lo hi)))
+         (vel (vec3f (random-in-range neg-vel-range vel-range)
+                     (random-in-range neg-vel-range vel-range)
+                     (random-in-range neg-vel-range vel-range)))
+         (accel (vec3f 0.0 0.0 0.0)))
     (add-entity (map (:pos pos)
                      (:size size)
                      (:vel vel)
@@ -91,9 +91,9 @@
       (gl:clear-color 0.0 0.0 0.0 1.0)
       (gl:clear :color-buffer-bit :depth-buffer-bit)
 
-      (cube-draw :position (vec3 0.0 0.0 0.0)
-                 :color (vec4 0.1 0.4 0.7 1.0)
-                 :rotate (vec3 0.0 0.0 0.0))
+      (cube-draw :position (vec3f 0.0 0.0 0.0)
+                 :color (vec4f 0.1 0.4 0.7 1.0)
+                 :rotate (vec3f 0.0 0.0 0.0))
 
       ;; draw entities
       (do-map (id comps *entities*)
@@ -104,26 +104,26 @@
       ;; fps
       (text-draw (format nil "~4f" (cfloat (average-fps)))
                  (get-font "sans24")
-                 :position (vec2 1.0 3.0)
-                 :scale (vec2 0.7 0.7)
+                 :position (vec2f 1.0 3.0)
+                 :scale (vec2f 0.7 0.7)
                  :draw-center (vec3f -0.5 -0.5 0.0)))))
 
-(declaim (ftype (function (vec3 vec3) vec3) vec3-to))
-(defun vec3-to (a b)
+(declaim (ftype (function (vec3f vec3f) vec3f) vec3f-to))
+(defun vec3f-to (a b)
   "vector from a to b"
   (declare (optimize (speed 3) (safety 0)))
   (kit.glm:vec- b a))
 
-(declaim (ftype (function (vec3 vec3) single-float) vec3-distance))
-(defun vec3-distance (a b)
+(declaim (ftype (function (vec3f vec3f) single-float) vec3f-distance))
+(defun vec3f-distance (a b)
   (declare (optimize (speed 3) (safety 0)))
-  (kit.glm:vec-length (vec3-to a b)))
+  (kit.glm:vec-length (vec3f-to a b)))
 
 (let ((move-timer (make-timer :end (/ 1.0 70.0))))
   (defun flock-update ()
     (timer-update move-timer)
     (iter (while (timer-ended-p move-timer))
-      (let ((boid-vecs (make-array 0 :element-type 'vec3
+      (let ((boid-vecs (make-array 0 :element-type 'vec3f
                                      :fill-pointer 0
                                      :adjustable t))
             (max-accel-mag 20.0)
@@ -134,9 +134,9 @@
           ;; cohesion
 
           (let ((n-proximity 0)
-                (seperate-vec (vec3 0.0 0.0 0.0))
-                (align-vec (vec3 0.0 0.0 0.0))
-                (cohesion-vec (vec3 0.0 0.0 0.0))
+                (seperate-vec (vec3f 0.0 0.0 0.0))
+                (align-vec (vec3f 0.0 0.0 0.0))
+                (cohesion-vec (vec3f 0.0 0.0 0.0))
                 (pos (@ comps :pos))
                 ;; (accel (@ comps :accel))
                 ;; (short-range-sense 3.0)
@@ -147,9 +147,9 @@
               (unless (= id oid)
                 (let ((opos (@ ocomps :pos))
                       (ovel (@ ocomps :vel)))
-                  (when (< (vec3-distance pos opos) long-range-sense)
+                  (when (< (vec3f-distance pos opos) long-range-sense)
                     (incf n-proximity)
-                    (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3-to pos opos))
+                    (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3f-to pos opos))
                           align-vec (kit.glm:vec+ align-vec ovel)
                           cohesion-vec (kit.glm:vec+ cohesion-vec opos))))))
             (setf
@@ -164,7 +164,7 @@
              align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.15))
 
              ;; vector to average position of others
-             cohesion-vec (vec3-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
+             cohesion-vec (vec3f-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
              cohesion-vec (kit.glm:normalize cohesion-vec)
              cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 1.09)))
 
@@ -215,18 +215,18 @@
                    (cond ((< p min-bound)
                           (setf (aref pos-copy i) max-bound
                                 (aref vel-copy i) (- v))
-                          (with! components :pos pos-copy)
-                          ;; (with! components :vel vel-copy)
+                          (includef components :pos pos-copy)
+                          ;; (includef components :vel vel-copy)
                           )
                          ((> p max-bound)
                           (setf (aref pos-copy i) min-bound
                                 (aref vel-copy i) (- v))
-                          (with! components :pos pos-copy)
-                          ;; (with! components :vel vel-copy)
+                          (includef components :pos pos-copy)
+                          ;; (includef components :vel vel-copy)
                           ))))
 
                ;; change in entities
-               (with! *entities* id components))
+               (includef *entities* id components))
 
              (incf boid-counter))))
 
