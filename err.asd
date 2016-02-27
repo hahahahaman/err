@@ -5,6 +5,7 @@
   :author "Ed Ye <hahahadude@gmail.com>"
   :license "Licenseless Rider"
   :depends-on (#:alexandria
+               #:bordeaux-threads
                #:iterate
                #:cl-fad
                #:cl-glfw3
