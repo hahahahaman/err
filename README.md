@@ -17,12 +17,12 @@ Currently an Opengl window can be opened with this:
 (defun cleanup ())
 
 (defun example ()
-  (err:run "insert-title"
-           :init-code (initialize)
-           :input-code (handle-input)
-           :render-code (render)
-           :update-code (update)
-           :cleanup-code (cleanup)))
+  (err:err-run "insert-title"
+               :init-code (initialize)
+               :input-code (handle-input)
+               :render-code (render)
+               :update-code (update)
+               :cleanup-code (cleanup)))
 ```
 
 See examples folder for some basic projects.
