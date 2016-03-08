@@ -8,12 +8,6 @@
     :initarg :id))
   (:default-initargs
    :id 0))
-#|
-(defgeneric use (SHADER))
-(defgeneric compile (SHADER))
-(defgeneric get-attrib (SHADER NAME))
-(defgeneric get-uniform (SHADER NAME))
-|#
 
 (defmethod initialize-instance ((program program) &key)
   (setf (id program) (gl:create-program))
@@ -82,6 +76,7 @@ the shader did not compile an error is called."
           (cffi:foreign-free status)
 
           (print (gl:get-program-info-log id))
+
           ;;program no longer needed
           ;;detaches all shaders
           ;;(gl:delete-program id)

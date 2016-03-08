@@ -1,12 +1,16 @@
 * DONE add center-mode parameters for draw functions
 CLOSED: [2016-02-19 Fri 08:27]
-* TODO improve render speed with instanced rendering or batch rendering (send lots of data through the vbo
+* TODO improve render speed with instanced rendering or batch rendering 
+(send lots of data through the vbo
 * DONE add macro that optimizes vec operations
 CLOSED: [2016-01-02 Sat 19:38]
-* TODO add some cffi stuff that will add the current directory to the foreign library search path
+* TODO add some cffi stuff that will search the current directory 
+foreign library search path
 * TODO Sound, probably OPENAL.
 * TODO Unit Tests? QuickCheck? (like the Haskell library)
 * TODO Macro for assigning all values of a map to local variables
 * DONE make new project that makes err projects
 CLOSED: [2016-02-19 Fri 08:27]
 my-qp uses html-template to do this.
+* TODO look into memory management for some classes
+finalize program class, drawer class for shaders and buffers
