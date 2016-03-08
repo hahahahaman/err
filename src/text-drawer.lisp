@@ -11,10 +11,11 @@
     :accessor vbo
     :initarg :vbo))
   (:default-initargs
-   :vbo (first (gl:gen-buffers 1))))
+   :vbo (gl:gen-buffer)))
 
 (defmethod initialize-instance :after ((drawer text-drawer) &key)
-  t)
+  (with-slots (vbo) drawer
+    (trivial-garbage:finalize drawer (lambda () (gl:delete-buffers (vector vbo))))))
 
 ;; TODO get rotation to work
 (defun text-draw (text font-text-chars

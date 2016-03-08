@@ -14,3 +14,8 @@
   (:default-initargs
    :program nil
    :vao (gl:gen-vertex-array)))
+
+(defmethod intialize-instance :after ((drawer drawer) &key)
+  (with-slots (vao) drawer
+    (trivial-garbage:finalize drawer (lambda ()
+                                       (gl:delete-vertex-arrays (vector vao))))))

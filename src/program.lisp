@@ -11,7 +11,8 @@
 
 (defmethod initialize-instance ((program program) &key)
   (setf (id program) (gl:create-program))
-  t)
+
+  (trivial-garbage:finalize program (lambda () (gl:delete-program id))))
 
 (defmethod use ((program program))
   (gl:use-program (id program)))
@@ -43,7 +44,7 @@ the shader did not compile an error is called."
           shader))))
 
 (defun program-compile (program vert-path frag-path &optional (geo-path nil))
-  "Does not return any useful value, calls error is linking of program failed."
+  "Does not return any useful value, calls error if linking of program failed."
   (with-slots (id) program
     (let ((vert (load-shader-file vert-path :vertex-shader))
           (frag (load-shader-file frag-path :fragment-shader))
