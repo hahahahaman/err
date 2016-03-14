@@ -23,7 +23,7 @@
                     (position (vec3f 0.0 0.0 0.0))
                     (scale (vec2f 1.0 1.0))
                     (color (vec4f 1.0 1.0 1.0 1.0))
-                    (rotate 0.0)
+                    (rotation 0.0)
                     (rotation-center (vec3f 0.0 0.0 0.0))
                     (draw-center (vec3f 0.0 0.0 0.0))
                     (drawer *text-drawer*))

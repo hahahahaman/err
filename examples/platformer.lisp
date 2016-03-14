@@ -287,7 +287,7 @@
                    :position (vec3f x y z)
                    :size (vec2f w h)
                    :color color
-                   :rotate (vec3f 0.0 (if face-right-p (cfloat pi) 0.0) 0.0)
+                   :rotation (vec3f 0.0 (if face-right-p (cfloat pi) 0.0) 0.0)
                    :draw-center (vec3f -0.5 0.5 0.0)
                    :clip-position (vec2f 11.0 128.0)
                    :clip-size (vec2f 45.0 62.0))

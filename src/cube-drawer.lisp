@@ -21,7 +21,7 @@
                     (position (vec3f 0.0 0.0 0.0))
                     (size (vec3f 1.0 1.0 1.0))
                     (color (vec4f 1.0 1.0 1.0 1.0))
-                    (rotate (vec3f 0.0 0.0 0.0))
+                    (rotation (vec3f 0.0 0.0 0.0))
                     (rotation-center (vec3f 0.0 0.0 0.0))
                     (draw-center (vec3f 0.0 0.0 0.0))
                     (draw-mode :triangles)
@@ -29,26 +29,7 @@
   (with-slots (vao program) drawer
     (gl:use-program (id program))
 
-    (let ((model (kit.glm:matrix*
-
-                  ;; move into position
-                  (kit.glm:translate position)
-
-                  ;; move to draw center
-                  (kit.glm:translate (vec3f-mul size (vec3f* draw-center -1.0)))
-
-                  ;; move back from rotation center
-                  (kit.glm:translate (vec3f-mul rotation-center size))
-
-                  ;; perform rotation
-                  (kit.glm:rotate rotate)
-
-                  ;; move to rotation center
-                  (kit.glm:translate (vec3f* (vec3f-mul rotation-center size)
-                                             -1.0))
-
-                  ;; scale first
-                  (kit.glm:scale size))))
+    (let ((model (make-model-matrix-in-draw-function)))
 
       (gl:uniform-matrix-4fv (get-uniform program "model") model nil)
       (gl:uniformfv (get-uniform program "color") color))

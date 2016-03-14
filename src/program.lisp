@@ -12,7 +12,7 @@
 (defmethod initialize-instance ((program program) &key)
   (setf (id program) (gl:create-program))
 
-  (trivial-garbage:finalize program (lambda () (gl:delete-program id))))
+  (trivial-garbage:finalize program (lambda () (gl:delete-program (id program)))))
 
 (defmethod use ((program program))
   (gl:use-program (id program)))

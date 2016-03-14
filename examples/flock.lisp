@@ -93,7 +93,7 @@
 
       (cube-draw :position (vec3f 0.0 0.0 0.0)
                  :color (vec4f 0.1 0.4 0.7 1.0)
-                 :rotate (vec3f 0.0 0.0 0.0))
+                 :rotation (vec3f 0.0 0.0 0.0))
 
       ;; draw entities
       (do-map (id comps *entities*)

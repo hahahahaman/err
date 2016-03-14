@@ -30,7 +30,7 @@
                     (position (vec3f 0.0 0.0 0.0))
                     (size (vec2f 10.0 10.0))
                     (color (vec4f 1.0 1.0 1.0 1.0))
-                    (rotate 0.0)
+                    (rotation 0.0)
                     (rotation-center (vec3f 0.0 0.0 0.0))
                     (draw-center (vec3f 0.0 0.0 0.0))
                     (draw-mode :triangle-strip)

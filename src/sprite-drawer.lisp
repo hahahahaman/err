@@ -44,7 +44,7 @@
                       (position (vec3f 0.0 0.0 0.0))
                       (size (vec2f 10.0 10.0))
                       (color (vec4f 1.0 1.0 1.0 1.0))
-                      (rotate (vec3f 0.0 0.0 0.0))
+                      (rotation (vec3f 0.0 0.0 0.0))
                       (rotation-center (vec3f 0.0 0.0 0.0))
                       (draw-center (vec3f 0.0 0.0 0.0))
                       (clip-position (vec2f 0.0 0.0))
