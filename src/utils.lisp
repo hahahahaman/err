@@ -348,3 +348,41 @@ Checks if two checksums are equal."
       (set-program-matrices rect-program)
       (set-program-matrices sprite-program)
       (set-program-matrices text-program :view nil))))
+
+(defun make-model-matrix (&key
+                            (position (vec3f 0.0 0.0 0.0))
+                            (size (vec3f 1.0 1.0 1.0))
+                            (color (vec4f 1.0 1.0 1.0 1.0))
+                            (rotation (vec3f 0.0 0.0 0.0))
+                            (rotation-center (vec3f 0.0 0.0 0.0))
+                            (draw-center (vec3f 0.0 0.0 0.0)))
+  (kit.glm:matrix*
+
+   ;; move into position
+   (kit.glm:translate position)
+
+   ;; move to draw center
+   (kit.glm:translate (vec3f-mul size (vec3f* draw-center -1.0)))
+
+   ;; move back from rotation center
+   (kit.glm:translate (vec3f-mul rotation-center size))
+
+   ;; perform rotation
+   (kit.glm:rotate rotation)
+
+   ;; move to rotation center
+   (kit.glm:translate (vec3f* (vec3f-mul rotation-center size)
+                              -1.0))
+
+   ;; scale first
+   (kit.glm:scale size)))
+
+(defmacro make-model-matrix-in-draw-function ()
+  `(make-model-matrix :position position
+                      :size size
+                      :color color
+                      :rotation rotation
+                      :rotation-center rotation-center
+                      :draw-center draw-center))
+
+(defmacro defdraw (func-name))
