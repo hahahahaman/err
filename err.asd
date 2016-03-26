@@ -24,6 +24,7 @@
                              (:file "globals")
                              (:file "timer")
                              (:file "vec")
+                             (:file "gl-dynamic-array")
                              (:file "utils")
                              (:file "time-travel")
                              (:file "file-tracker")

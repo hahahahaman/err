@@ -385,4 +385,4 @@ Checks if two checksums are equal."
                       :rotation-center rotation-center
                       :draw-center draw-center))
 
-(defmacro defdraw (func-name))
+;; (defmacro defdraw (func-name))
