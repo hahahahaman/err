@@ -62,7 +62,7 @@ Draws a text string on screen."
                                                    1.0)))
 
                     ;; ;; rotate around the z-axis
-                    (kit.glm:rotate* 0.0 0.0 (cfloat rotate))
+                    (kit.glm:rotate* 0.0 0.0 (cfloat rotation))
 
                     ;; move to rotation center
                     (kit.glm:translate* (cfloat (* -1.0
