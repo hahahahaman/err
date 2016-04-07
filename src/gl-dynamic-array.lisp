@@ -8,6 +8,9 @@
     :reader array-capacity
     :type unsigned-int
     :initarg :capacity)
+   (capacity-multiplier
+    :type unsigned-int
+    :initarg :multiplier)
    (array-size
     :reader array-size
     :type unsigned-int
@@ -17,6 +20,7 @@
     :initarg :array-type))
   (:default-initargs
    :capacity 10
+   :multiplier 2
    :size 0
    :array-type :float))
 
@@ -35,9 +39,10 @@
   (setf (gl:glaref (gl-array dynamic-array) index) value))
 
 (defun gl-dyn-push (dynamic-array value)
-  (with-slots (gl-array array-size array-capacity array-type) dynamic-array
+  (with-slots (gl-array array-size array-capacity
+               array-type capacity-multiplier) dynamic-array
     (cond ((= array-size array-capacity)
-           (setf array-capacity (* 2 array-capacity))
+           (setf array-capacity (* capacity-multiplier array-capacity))
            (let ((new-array (gl:alloc-gl-array array-type array-capacity)))
              (dotimes (i array-size)
                (setf (gl:glaref new-array i) (gl:glaref gl-array i)))
