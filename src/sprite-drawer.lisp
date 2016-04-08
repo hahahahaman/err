@@ -80,7 +80,7 @@
                                       (cfloat (* (z-val rotation-center)
                                                  1.0)))
                   ;; rotate around the z-axis
-                  (kit.glm:rotate rotate)
+                  (kit.glm:rotate rotation)
                   ;; move to rotation center
                   (kit.glm:translate* (cfloat (* -1.0
                                                  (x-val rotation-center)
