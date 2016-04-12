@@ -386,3 +386,18 @@ Checks if two checksums are equal."
 ;;                       :draw-center draw-center))
 
 ;; (defmacro defdraw (func-name))
+
+(defmacro defrender (func-name fps &body body)
+  `(let ((render-timer (make-timer :end (/ 1.0 ,fps))))
+     (defun ,func-name ()
+       (timer-update render-timer)
+       (when (timer-ended-p render-timer)
+         (timer-reset render-timer)
+         ,@body))))
+
+(defmacro defupdate (func-name fps &body body)
+  `(let ((update-timer (make-timer :end (/ 1.0 ,fps))))
+     (defun ,func-name ()
+       (timer-update update-timer)
+       (iter (while (timer-ended-p update-timer))
+         (timer-keep-overflow update-timer)))))

@@ -3,6 +3,16 @@ Utility functions
 |#
 (in-package :err-examples)
 
+(defglobal *project-directory* (cl-fad:merge-pathnames-as-directory
+                                (asdf:system-source-directory :err-examples)
+                                (pathname "examples/")))
+(defglobal *shader-directory* (cl-fad:merge-pathnames-as-directory
+                               *project-directory* (pathname "data/shaders/")))
+(defglobal *texture-directory* (cl-fad:merge-pathnames-as-directory
+                                *project-directory* (pathname "data/images/")))
+(defglobal *font-directory* (cl-fad:merge-pathnames-as-directory
+                             *project-directory* (pathname "data/fonts/")))
+
 (defun init-managers ()
   (setf *program-manager* (make-instance 'program-manager)
         *texture-manager* (make-instance 'texture-manager)

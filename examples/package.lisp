@@ -18,4 +18,5 @@
                           #:with)
   (:export #:flock
            #:platformer
-           #:pong))
+           #:pong
+           #:glslsandbox))

@@ -11,4 +11,5 @@
                              (:file "utils")
                              (:file "flock")
                              (:file "platformer")
-                             (:file "pong")))))
+                             (:file "pong")
+                             (:file "glslsandbox")))))
