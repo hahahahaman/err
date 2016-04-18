@@ -11,7 +11,7 @@ priority, and with only 3 levels of actual priority ranging from 0 to
 2 (inclusive)."
   (cond ((> priority 2) (setf priority 2))
         ((< priority 0) (setf priority 0)))
-  `(vector-push-extend (lambda () ,code) (aref *destructive-changes* priority)))
+  `(vector-push-extend (lambda () ,code) (aref *destructive-changes* ,priority)))
 
 (defmacro defevent (name parameters &body body)
   "Creates a function that calls ADD-EVENT."
