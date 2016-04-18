@@ -81,7 +81,11 @@ time-travel
 events
 |#
 
-(defglobal *destructive-changes* (make-array 0 :adjustable t :fill-pointer 0 :element-type 'function))
+(defglobal *destructive-changes*
+    (make-array 3 :element-type 'vector
+                  :initial-element (make-array 0 :adjustable t
+                                                 :fill-pointer 0
+                                                 :element-type 'function)))
 
 #|
 resource-manager
