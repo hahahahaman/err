@@ -400,4 +400,5 @@ Checks if two checksums are equal."
      (defun ,func-name ()
        (timer-update update-timer)
        (iter (while (timer-ended-p update-timer))
-         (timer-keep-overflow update-timer)))))
+         (timer-keep-overflow update-timer)
+         ,@body))))
