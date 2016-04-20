@@ -78,7 +78,7 @@ Creates a new texture2d instance with the picture at FILEPATH."
       (when alpha
         (setf internal-format :rgba
               image-format :rgba))
-      (destructuring-bind (image width height channels)
+      (multiple-value-bind (image width height channels)
           (cl-soil:load-image filepath image-format)
         (declare (ignore channels))
         (texture2d-generate texture2d width height image)
