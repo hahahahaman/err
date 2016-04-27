@@ -43,7 +43,7 @@ err is known to work with [SBCL](http://www.sbcl.org/) and
   * [cl-opengl](https://github.com/3b/cl-opengl)
   * [glkit](https://github.com/lispgames/glkit)
   * [cl-freetype2](https://github.com/rpav/cl-freetype2)
-  * [fest](https://github.com/slburson/fset)
+  * [fset](https://github.com/slburson/fset)
   * [defenum](http://defenum.sourceforge.net/)
   * [ironclad](http://method-combination.net/lisp/ironclad/)
 
