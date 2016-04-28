@@ -123,6 +123,7 @@
 (define-vecn 4 double-float "d")
 
 (defmacro define-vec-n-val (func-name n)
+  "Define a function and its setf to get the Nth array value."
   `(progn
      (declaim (ftype (function (vector) number) ,func-name))
      (defun ,func-name (vec)

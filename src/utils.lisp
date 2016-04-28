@@ -259,11 +259,12 @@ Remember to free gl-array afterwards."
 ;;;
 
 (defun md5 (str)
-  "=> CHECKSUM
+  "=> CHECKSUM (STRING)
 Returns the md5 checksum of STR."
   (ironclad:byte-array-to-hex-string
-   (ironclad:digest-sequence :md5 
+   (ironclad:digest-sequence :md5
                              (ironclad:ascii-string-to-byte-array str))))
+
 (defun valid-checksum-p (checksum other-checksum)
   "=> BOOLEAN
 Checks if two checksums are equal."
@@ -297,7 +298,8 @@ Checks if two checksums are equal."
   "Stops the program from running for TIME seconds."
   (sleep time))
 
-(defun file-in-dir (directory-path file)
+(defun file-pathname (directory-path file)
+  "Gets file pathname in directory."
   (cl-fad:merge-pathnames-as-file (pathname directory-path) (pathname file)))
 
 (defun init-managers ()
@@ -322,7 +324,7 @@ Checks if two checksums are equal."
   (init-managers)
 
   (flet ((file-from-shader-dir (file)
-           (file-in-dir shader-directory file)))
+           (file-pathname shader-directory file)))
     (let ((text-program (make-program (file-from-shader-dir "text.v.glsl")
                                       (file-from-shader-dir "text.f.glsl")))
           (cube-program (make-program (file-from-shader-dir "cube.v.glsl")
