@@ -72,12 +72,7 @@
                                               0.1 1000.0)))
         (gl:use-program (id program))
         (gl:uniform-matrix-4fv (get-uniform program "view") view nil)
-        (gl:uniform-matrix-4fv (get-uniform program "projection") proj nil)))
-
-    (setf *last-x* *cursor-x*
-          *last-y* *cursor-y*)
-    (setf *cursor-callback-p* nil
-          *scroll-callback-p* nil)))
+        (gl:uniform-matrix-4fv (get-uniform program "projection") proj nil)))))
 
 (defrender flock-render 200.0
   (gl:enable :blend :depth-test)

@@ -299,7 +299,7 @@ Checks if two checksums are equal."
   (sleep time))
 
 (defun file-pathname (directory-path file)
-  "Gets file pathname in directory."
+  "Returns the pathname of FILE in DIRECTORY-PATH"
   (cl-fad:merge-pathnames-as-file (pathname directory-path) (pathname file)))
 
 (defun init-managers ()

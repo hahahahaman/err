@@ -39,7 +39,7 @@
           (initialize-globals)
           ,init-code
 
-       ;;; glfw input
+          ;;; glfw input
           (glfw:set-key-callback 'key-callback)
           (glfw:set-mouse-button-callback 'mouse-callback)
           (glfw:set-cursor-position-callback 'cursor-callback)
@@ -52,6 +52,13 @@
             (glfw:poll-events)
 
             ,input-code
+
+            ;; set input globals to new state
+            (setf *last-x* *cursor-x*
+                  *last-y* *cursor-y*)
+            (setf *cursor-callback-p* nil
+                  *scroll-callback-p* nil)
+
             ,render-code
             ,update-code
 
