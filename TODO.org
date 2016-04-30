@@ -12,5 +12,3 @@ foreign library search path
 * DONE make new project that makes err projects
 CLOSED: [2016-02-19 Fri 08:27]
 my-qp uses html-template to do this.
-* TODO look into memory management for some classes
-finalize program class, drawer class for shaders and buffers
