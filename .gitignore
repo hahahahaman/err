@@ -1,5 +1,6 @@
 ##compiled lisp files
 *.fasl
+*.*fsl
 
 ##emacs recovery files
 *~
