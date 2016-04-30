@@ -404,3 +404,12 @@ Checks if two checksums are equal."
        (iter (while (timer-ended-p update-timer))
          (timer-keep-overflow update-timer)
          ,@body))))
+
+(defmacro run-thread (&body body)
+  `(bt:make-thread (lambda () ,@body)))
+
+(defun repl-print (object)
+  "Slime REPL rebinds *STANDARD-OUTPUT* while new threads do not.
+LOAD-TIME-VALUE obtains the value of an object at read time, allowing for the
+usage of the rebound *STANDARD-OUTPUT* stream."
+  (print object (load-time-value *standard-output*)))

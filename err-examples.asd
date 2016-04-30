@@ -12,4 +12,5 @@
                              (:file "flock")
                              (:file "platformer")
                              (:file "pong")
+                             (:file "open-close")
                              (:file "glslsandbox")))))

@@ -121,7 +121,7 @@
       ;; alignment
       ;; cohesion
 
-      (let ((n-proximity 0)
+      (let ((n-proximity 1)
             (seperate-vec (vec3f 0.0 0.0 0.0))
             (align-vec (vec3f 0.0 0.0 0.0))
             (cohesion-vec (vec3f 0.0 0.0 0.0))

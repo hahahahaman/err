@@ -15,6 +15,7 @@
                #:fset
                #:glkit
                #:trivial-garbage
+               #:trivial-main-thread
                #:defenum
                #:swank
                #:ironclad)
