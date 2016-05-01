@@ -235,26 +235,21 @@
              :position (vec3f 50.0 (cfloat (/ *height* 2.0)) 0.0)
              :scale (vec2f 1.5 1.5)))
 
-(let ((render-timer (make-timer :end (/ 1.0 60.0))))
-  (defun pong-render ()
-    (timer-update render-timer)
-    (when (timer-ended-p render-timer)
-      (gl:enable :blend :depth-test)
-      (gl:blend-func :src-alpha :one-minus-src-alpha)
-      (gl:clear-color 0.0 0.0 0.0 1.0)
-      (gl:clear :color-buffer-bit :depth-buffer-bit)
+(defrender pong-render +max-fps+
+  (gl:enable :blend :depth-test)
+  (gl:blend-func :src-alpha :one-minus-src-alpha)
+  (gl:clear-color 0.0 0.0 0.0 1.0)
+  (gl:clear :color-buffer-bit :depth-buffer-bit)
 
-      (cond ((equalp *pong-state* +pong-game+)
-             (pong-render-game)))
+  (cond ((equalp *pong-state* +pong-game+)
+         (pong-render-game)))
 
-      ;; fps
-      (text-draw (format nil "~4f" (average-fps))
-                 (get-font "sans24")
-                 :position (vec3f 0.0 0.0 0.0)
-                 :scale (vec2f 0.5 0.5)
-                 :draw-center (vec3f -0.5 -0.5 0.0))
-
-      (timer-reset render-timer))))
+  ;; fps
+  (text-draw (format nil "~4f" (average-fps))
+             (get-font "sans24")
+             :position (vec3f 0.0 0.0 0.0)
+             :scale (vec2f 0.5 0.5)
+             :draw-center (vec3f -0.5 -0.5 0.0)))
 
 (defun pong-valid-move-p (position size entity-id)
   "=> BOOLEAN, OBJECT, ID"
@@ -408,13 +403,9 @@
       (when game-reload-p
         (add-event :code (pong-game-init))))))
 
-(let ((update-timer (make-timer :end (/ 1.0 100.0))))
-  (defun pong-update ()
-    (timer-update update-timer)
-    (iter (while (timer-ended-p update-timer))
-      (timer-keep-overflow update-timer)
-      (when (equalp *pong-state* +pong-game+)
-        (pong-update-game (timer-end update-timer))))))
+(defupdate pong-update +max-fps+
+  (when (equalp *pong-state* +pong-game+)
+    (pong-update-game (timer-end update-timer))))
 
 (defun pong-cleanup ())
 
