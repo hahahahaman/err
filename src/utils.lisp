@@ -29,9 +29,8 @@ Average time change over a few hundred frames."
 
   ;; if the frame completed quicker than the minimum frame length
   ;; then sleep for the necessary amount of time
-  (let ((min-frame-length (/ 1.0 +max-fps+)))
-    (when (> min-frame-length *dt*)
-      (sleep (- min-frame-length *dt*)))))
+  (sleep (max 0.0 (- #.(/ 1.0 +max-fps+)
+                     (- (glfw:get-time) *previous-time*)))))
 
 ;;;;;;;;;;;;;;;;;
 ;; handle globals
@@ -64,6 +63,7 @@ Average time change over a few hundred frames."
 
   ;; go through all globals setting them to original value
   (iter (for (var-symbol func) on *global-setfs* by #'cddr)
+    (declare (ignore var-symbol))
     (funcall func)))
 
 ;;; type utils
@@ -314,19 +314,26 @@ Checks if two checksums are equal."
   (when projection
     (gl:uniform-matrix-4fv (get-uniform program "projection") projection nil)))
 
-(defun set-program-perspective (program)
-  (set-program-matrices :projection (kit.glm:perspective-matrix
+(defun set-program-perspective (program
+                                &key
+                                  (view (get-view-matrix *camera*)))
+  (set-program-matrices program
+                        :view view
+                        :projection (kit.glm:perspective-matrix
                                      (kit.glm:deg-to-rad (zoom *camera*))
                                      (cfloat (/ *width* *height*))
                                      0.1 1000.0)))
 
-(defun set-program-orthographic (program)
-  (set-program-matrices :projection (kit.glm:ortho-matrix 0.0
-                                                          (cfloat *width*)
-                                                          0.0
-                                                          (cfloat *height*)
-                                                          -100.0
-                                                          100.0)))
+(defun set-program-orthographic (program
+                                 &key
+                                   (view (get-view-matrix *camera*)))
+  (set-program-matrices program :view view
+                                :projection (kit.glm:ortho-matrix 0.0
+                                                                  (cfloat *width*)
+                                                                  0.0
+                                                                  (cfloat *height*)
+                                                                  -100.0
+                                                                  100.0)))
 
 (defun initialize-shaders (shader-directory)
   (init-managers)
@@ -385,10 +392,10 @@ Checks if two checksums are equal."
       (load-program "rect" rect-program)
       (load-program "sprite" sprite-program)
 
-      (set-program-orthograpic cube-program)
-      (set-program-orthograpic rect-program)
-      (set-program-orthograpic sprite-program)
-      (set-program-orthograpic text-program :view nil))))
+      (set-program-orthographic cube-program)
+      (set-program-orthographic rect-program)
+      (set-program-orthographic sprite-program)
+      (set-program-orthographic text-program :view nil))))
 
 (defmacro defrender (func-name fps &body body)
   `(let ((render-timer (make-timer :end (/ 1.0 ,fps))))
