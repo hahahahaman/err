@@ -52,26 +52,26 @@
 
          (iter (until (glfw:window-should-close-p))
 
-           ;; running loop in seperate thread means swank still runs
-           ;; (update-swank)
+               ;; running loop in seperate thread means swank still runs
+               ;; (update-swank)
 
-           (continuable
-             (glfw:poll-events)
+               (continuable
+                 (glfw:poll-events)
 
-             ,input-code
+                 ,input-code
 
-             ;; set input globals to new state
-             (setf *last-x* *cursor-x*
-                   *last-y* *cursor-y*)
-             (setf *cursor-callback-p* nil
-                   *scroll-callback-p* nil)
+                 ;; set input globals to new state
+                 (setf *last-x* *cursor-x*
+                       *last-y* *cursor-y*)
+                 (setf *cursor-callback-p* nil
+                       *scroll-callback-p* nil)
 
-             ,render-code
-             ,update-code
+                 ,render-code
+                 ,update-code
 
-             (update-files)
-             (update-events)
-             (glfw:swap-buffers)
-             (update-globals)))
+                 (update-files)
+                 (update-events)
+                 (glfw:swap-buffers)
+                 (update-globals)))
 
          ,cleanup-code))))

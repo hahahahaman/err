@@ -121,7 +121,7 @@
       ;; alignment
       ;; cohesion
 
-      (let ((n-proximity 1)
+      (let ((n-proximity 0)
             (seperate-vec (vec3f 0.0 0.0 0.0))
             (align-vec (vec3f 0.0 0.0 0.0))
             (cohesion-vec (vec3f 0.0 0.0 0.0))
@@ -140,21 +140,22 @@
                 (setf seperate-vec (kit.glm:vec+ seperate-vec (vec3f-to pos opos))
                       align-vec (kit.glm:vec+ align-vec ovel)
                       cohesion-vec (kit.glm:vec+ cohesion-vec opos))))))
-        (setf
-         ;; opposite of average direction towards others
-         seperate-vec (kit.glm:vec* seperate-vec -1.0)
-         seperate-vec (kit.glm:normalize seperate-vec)
-         seperate-vec (kit.glm:vec* seperate-vec (* max-accel-mag 0.1))
+        (when (> n-proximity 0)
+          (setf
+           ;; opposite of average direction towards others
+           seperate-vec (kit.glm:vec* seperate-vec -1.0)
+           seperate-vec (kit.glm:normalize seperate-vec)
+           seperate-vec (kit.glm:vec* seperate-vec (* max-accel-mag 0.1))
 
-         ;; average velocity of others
-         align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
-         align-vec (kit.glm:normalize seperate-vec)
-         align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.15))
+           ;; average velocity of others
+           align-vec (kit.glm:vec/ align-vec (cfloat n-proximity))
+           align-vec (kit.glm:normalize seperate-vec)
+           align-vec (kit.glm:vec* align-vec (* max-accel-mag 0.15))
 
-         ;; vector to average position of others
-         cohesion-vec (vec3f-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
-         cohesion-vec (kit.glm:normalize cohesion-vec)
-         cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 1.09)))
+           ;; vector to average position of others
+           cohesion-vec (vec3f-to pos (kit.glm:vec/ cohesion-vec (cfloat n-proximity)))
+           cohesion-vec (kit.glm:normalize cohesion-vec)
+           cohesion-vec (kit.glm:vec* cohesion-vec (* max-accel-mag 1.09))))
 
         (vector-push-extend (if (> n-proximity 0)
                                 (kit.glm:vec+ cohesion-vec
@@ -198,20 +199,20 @@
            (let ((pos-copy (copy-seq (@ components :pos)))
                  (vel-copy (copy-seq (@ components :vel))))
              (iter (for p in-vector pos)
-               (for v in-vector vel)
-               (for i from 0)
-               (cond ((< p min-bound)
-                      (setf (aref pos-copy i) max-bound
-                            (aref vel-copy i) (- v))
-                      (includef components :pos pos-copy)
-                      ;; (includef components :vel vel-copy)
-                      )
-                     ((> p max-bound)
-                      (setf (aref pos-copy i) min-bound
-                            (aref vel-copy i) (- v))
-                      (includef components :pos pos-copy)
-                      ;; (includef components :vel vel-copy)
-                      ))))
+                   (for v in-vector vel)
+                   (for i from 0)
+                   (cond ((< p min-bound)
+                          (setf (aref pos-copy i) max-bound
+                                (aref vel-copy i) (- v))
+                          (includef components :pos pos-copy)
+                          ;; (includef components :vel vel-copy)
+                          )
+                         ((> p max-bound)
+                          (setf (aref pos-copy i) min-bound
+                                (aref vel-copy i) (- v))
+                          (includef components :pos pos-copy)
+                          ;; (includef components :vel vel-copy)
+                          ))))
 
            ;; change in entities
            (includef *entities* id components))
