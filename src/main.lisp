@@ -51,7 +51,9 @@
          ;; (glfw:set-input-mode :cursor :disabled) ;; hides cursor
 
          (iter (until (glfw:window-should-close-p))
-           (update-swank)
+
+           ;; running loop in seperate thread means swank still runs
+           ;; (update-swank)
 
            (continuable
              (glfw:poll-events)
