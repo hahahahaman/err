@@ -3,7 +3,7 @@
 ;; Basic example, opens then closes a window.
 
 (defun oc-init ()
-  (repl-print "open")
+  (debug-print "open")
   (close-window))
 
 (defun oc-input ())
@@ -11,7 +11,7 @@
 (defun oc-update ())
 
 (defun oc-cleanup ()
-  (repl-print "close"))
+  (debug-print "close"))
 
 (defun open-close ()
   (err-run "open-close"
