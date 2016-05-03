@@ -1,5 +1,23 @@
 (in-package :err)
 
+(declaim (ftype (function (vector sequence symbol fixnum) t)
+                coerce-replace-array))
+(defun coerce-replace-array (target-array source-sequence coerce-type
+                             start end)
+  (cond ((vectorp source-sequence)
+         (iter (for v in-vector source-sequence)
+           (for i from start below end)
+           (setf (aref target-array i) (if (typep v coerce-type)
+                                           v
+                                           (coerce v coerce-type)))))
+        ((listp source-sequence)
+         (iter (for l in source-sequence)
+           (for i from start below end)
+           (setf (aref target-array i) (if (typep l coerce-type)
+                                           l
+                                           (coerce l coerce-type))
+                 )))))
+
 ;; original code structure from mathkit
 (defmacro define-vecn (n type &optional (suffix ""))
   "Creates a new type of vector, with corresponding utility functions."
@@ -32,24 +50,20 @@
          new-clamptype
          `((progn
              (deftype ,vecn () '(simple-array ,type (,n)))
+
              (defun ,vecn (a &rest r)
-               (etypecase a
-                 (vector
-                  (cond
-                    ((= (length a) ,n) a)
-                    ((> (length a) ,n)
-                     (let ((a+ (make-array ,n :element-type ',type)))
-                       (replace a+ a)
-                       a+))
-                    (t (let* ((a+ (make-array ,n :element-type ',type)))
-                         (replace a+ a)
-                         (replace a+ r :start1 (length a))
-                         a+))))
-                 (,type
-                  (let* ((a+ (make-array ,n :element-type ',type)))
+               (let ((a+ (make-array ,n :element-type ',type)))
+                 (typecase a
+                   (sequence
+                    (coerce-replace-array a+ a ',type 0 ,n))
+                   (,type
                     (setf (aref a+ 0) a)
-                    (replace a+ r :start1 1)
-                    a+))))
+                    (coerce-replace-array a+ r ',type 1 ,n)
+                    a+)
+                   (t
+                    (setf (aref a+ 0) (coerce a ',type))
+                    (coerce-replace-array a+ r ',type 1 ,n)))
+                 a+))
 
              (declaim (ftype (function (,vecn ,vecn) ,vecn) ,v+))
              (defun ,v+ (v1 v2)
