@@ -49,7 +49,9 @@ Average time change over a few hundred frames."
   (setf *key-actions* nil
         *mouse-button-actions* nil
         *scroll-callback-p* nil
-        *cursor-callback-p* nil))
+        *cursor-callback-p* nil
+        *last-x* *cursor-x*
+        *last-y* *cursor-y*))
 
 (defun update-globals ()
   "A single function that encompasses global updates."
