@@ -110,7 +110,7 @@
   (pong-game-init))
 
 
-(defun pong-input ()
+(defun-discrete-timer pong-input 100.0 ()
   (when (key-action-p :escape :press)
     (glfw:set-window-should-close))
   (when (and (key-pressed-p :left-control)
@@ -136,30 +136,30 @@
                 (ball-accel (@ ball :acceleration))
                 (ball-moving-p (@ ball :moving-p))
                 (accel-rate 20.0))
+
            (when up-p
-             (setf (y-val left-accel) accel-rate))
+             (setf left-accel (vec2f 0.0 accel-rate)))
            (when down-p
-             (setf (y-val left-accel) (- accel-rate)))
+             (setf left-accel (vec2f 0.0 (- accel-rate))))
            (when (not (or up-p down-p))
+             (setf left-accel (vec2f 0.0))
              (cond ((< (abs (y-val left-vel)) 2.0)
-                    (setf left-accel (vec2f 0.0 0.0)
-                          left-vel (vec2f 0.0 0.0)))
-                   (t (setf (y-val left-accel) (* (- (signum (y-val left-vel)))
-                                                  accel-rate 5.0)))))
+                    (setf left-vel (vec2f 0.0)))
+                   (t (setf left-vel (vec2f 0.0 (* (y-val left-vel) 0.95))))))
 
            (when left-p
-             (setf (x-val top-accel) (- accel-rate)))
+             (setf top-accel (vec2f (- accel-rate))))
            (when right-p
-             (setf (x-val top-accel) accel-rate))
+             (setf top-accel (vec2f accel-rate)))
            (when (not (or left-p right-p))
+             (setf top-accel (vec2f 0.0))
              (cond ((< (abs (x-val top-vel)) 2.0)
-                    (setf top-accel (vec2f 0.0 0.0)
-                          top-vel (vec2f 0.0 0.0)))
-                   (t (setf (x-val top-accel) (* (- (signum (x-val top-vel)))
-                                                 accel-rate 5.0)))))
+                    (setf top-vel (vec2f 0.0)))
+                   (t (setf top-vel (vec2f (* (x-val top-vel) 0.95))))))
 
            (unless ball-moving-p
              (when (key-pressed-p :space)
+               (print "space")
                (let* ((start-vel 10.0)
                       (x (cfloat (random-in-range (- start-vel) start-vel)))
                       (diff (- (abs start-vel) (abs x)))
@@ -168,31 +168,32 @@
                        ball-vel (vec2f x y)
                        ball-moving-p t))))
 
-           (setf left (-> left
-                          (with :acceleration left-accel)
-                          (with :velocity left-vel))
-                 right (-> right
-                           (with :acceleration left-accel)
-                           (with :velocity left-vel))
-                 top (-> top
-                         (with :acceleration top-accel)
-                         (with :velocity top-vel))
-                 bot (-> bot
-                         (with :acceleration top-accel)
-                         (with :velocity top-vel))
-                 ball (-> ball
-                          (with :velocity ball-vel)
-                          (with :acceleration ball-accel)
-                          (with :moving-p ball-moving-p)))
+           (includef top :acceleration top-accel)
 
-           (add-event
-            :code
-            (setf *entities* (-> *entities*
-                                 (with *pong-paddle-bot* bot)
-                                 (with *pong-paddle-left* left)
-                                 (with *pong-paddle-right* right)
-                                 (with *pong-paddle-top* top)
-                                 (with *pong-ball* ball))))))))
+           (setf
+            left (-> left
+                     (with :acceleration left-accel)
+                     (with :velocity left-vel))
+            right (-> right
+                      (with :acceleration left-accel)
+                      (with :velocity left-vel))
+            top (-> top
+                    (with :acceleration top-accel)
+                    (with :velocity top-vel))
+            bot (-> bot
+                    (with :acceleration top-accel)
+                    (with :velocity top-vel))
+            ball (-> ball
+                     (with :velocity ball-vel)
+                     (with :acceleration ball-accel)
+                     (with :moving-p ball-moving-p)))
+
+           (setf *entities* (-> *entities*
+                                (with *pong-paddle-bot* bot)
+                                (with *pong-paddle-left* left)
+                                (with *pong-paddle-right* right)
+                                (with *pong-paddle-top* top)
+                                (with *pong-ball* ball)))))))
 
 (defun pong-render-game ()
   (with-slots (position) *camera*
@@ -397,11 +398,11 @@
 
       ;; update entities
 
-      (add-event
-       :code
-       (includef *entities* id comps))
+      (includef *entities* id comps)
+
       (when game-reload-p
-        (add-event :code (pong-game-init))))))
+        (add-event :priority 0
+                   :code (pong-game-init))))))
 
 (defupdate pong-update +max-fps+
   (when (equalp *pong-state* +pong-game+)
