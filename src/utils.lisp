@@ -399,6 +399,22 @@ Checks if two checksums are equal."
       (set-program-orthographic sprite-program)
       (set-program-orthographic text-program :view nil))))
 
+(defmacro defun-discrete-timer (name fps (&rest args) &body body)
+  `(let ((timer (make-timer :end (/ 1.0 ,fps))))
+     (defun ,name (,@args)
+       (timer-update timer)
+       (when (timer-ended-p timer)
+         (timer-reset timer)
+         ,@body))))
+
+(defmacro defun-continuous-timer (name fps (&rest args) &body body)
+  `(let ((timer (make-timer :end (/ 1.0 ,fps))))
+     (defun ,name (,@args)
+       (timer-update timer)
+       (iter (while (timer-ended-p timer))
+             (timer-keep-overflow timer)
+             ,@body))))
+
 (defmacro defrender (func-name fps &body body)
   `(let ((render-timer (make-timer :end (/ 1.0 ,fps))))
      (defun ,func-name ()
