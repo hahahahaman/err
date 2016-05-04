@@ -6,17 +6,16 @@
                              start end)
   (cond ((vectorp source-sequence)
          (iter (for v in-vector source-sequence)
-           (for i from start below end)
-           (setf (aref target-array i) (if (typep v coerce-type)
-                                           v
-                                           (coerce v coerce-type)))))
+               (for i from start below end)
+               (setf (aref target-array i) (if (typep v coerce-type)
+                                               v
+                                               (coerce v coerce-type)))))
         ((listp source-sequence)
          (iter (for l in source-sequence)
-           (for i from start below end)
-           (setf (aref target-array i) (if (typep l coerce-type)
-                                           l
-                                           (coerce l coerce-type))
-                 )))))
+               (for i from start below end)
+               (setf (aref target-array i) (if (typep l coerce-type)
+                                               l
+                                               (coerce l coerce-type)))))))
 
 ;; original code structure from mathkit
 (defmacro define-vecn (n type &optional (suffix ""))
@@ -69,53 +68,50 @@
              (defun ,v+ (v1 v2)
                (declare (optimize (speed 3) (safety 0)))
                (,vecn ,@(iter (for i from 0 below n)
-                          (collect `(+ (aref v1 ,i) (aref v2 ,i))))))
+                              (collect `(+ (aref v1 ,i) (aref v2 ,i))))))
 
              (declaim (ftype (function (,vecn ,vecn) ,vecn) ,v-))
              (defun ,v- (v1 v2)
                (declare (optimize (speed 3) (safety 0)))
                (,vecn ,@(iter (for i from 0 below n)
-                          (collect `(- (aref v1 ,i) (aref v2 ,i))))))
+                              (collect `(- (aref v1 ,i) (aref v2 ,i))))))
 
              (declaim (ftype (function (,vecn ,type) ,vecn) ,v*))
              (defun ,v* (v x)
                (declare (optimize (speed 3) (safety 0)))
                (,vecn ,@(iter (for i from 0 below n)
-                          (collect `(* (aref v ,i) x)))))
+                              (collect `(* (aref v ,i) x)))))
 
              (declaim (ftype (function (,vecn ,type) ,vecn) ,v/))
              (defun ,v/ (v x)
                (declare (optimize (speed 3) (safety 0)))
                (,vecn ,@(iter (for i from 0 below n)
-                          (collect `(/ (aref v ,i) x)))))
+                              (collect `(/ (aref v ,i) x)))))
 
              (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vmul))
              (defun ,vmul (v1 v2)
                (declare (optimize (speed 3) (safety 0)))
                (,vecn ,@(iter (for i from 0 below n)
-                          (collect `(* (aref v1 ,i) (aref v2 ,i))))))
+                              (collect `(* (aref v1 ,i) (aref v2 ,i))))))
 
              (declaim (ftype (function (,vecn ,vecn) ,vecn) ,vdiv))
              (defun ,vdiv (v n)
                (declare (optimize (speed 3) (safety 0)))
                (,vecn ,@(iter (for i from 0 below n)
-                          (collect `(/ (aref v1 ,i) (aref v2 ,i))))))
+                              (collect `(/ (aref v1 ,i) (aref v2 ,i))))))
 
              (declaim (ftype (function (,vecn) float) ,vlength))
              (defun ,vlength (v)
                (declare (optimize (speed 3) (safety 0)))
-               (sqrt (the ,type
-                          (reduce #'+ (the ,vecn
-                                           (cl:map ',vecn (lambda (x)
-                                                            (declare (,type x))
-                                                            (the ,type (* x x)))
-                                                   v))))))
+               (sqrt (the ,type (iter (for x in-vector v)
+                                      (sum (* x x))
+                                      (declare (,type x))))))
 
              (declaim (ftype (function (,vecn ,vecn) float) ,vdotproduct))
              (defun ,vdotproduct (v1 v2)
                (declare (optimize (speed 3) (safety 0)))
-               (+ ,@(iter (for i from 0 below n)
-                      (collect `(* (aref v1 ,i) (aref v2 ,i))))))
+               (iter (for i from 0 below n)
+                     (sum (* (aref v1 i) (aref v2 i)))))
 
              (declaim (ftype (function (,vecn) float) ,vdotproduct))
              (defun ,vnormalize (v)
