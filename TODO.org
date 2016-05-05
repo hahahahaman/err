@@ -16,3 +16,6 @@ my-qp uses html-template to do this.
 * TODO Fix up update-events, can be unbelievably super slow
 perhaps it is a bad idea to use a bunch of lambdas, since closures cons and have
 to be gc'ed
+* TODO Remove model matrix from draw calls
+use dynamic and static draw buffers, probably much more efficient
+
