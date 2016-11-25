@@ -13,51 +13,59 @@
   ;; (pushnew #P"./" *foreign-library-directories*
   ;;          :test #'equal)
   "Generic game loop code."
-  `(bordeaux-threads:make-thread
-    (lambda ()
-      (block nil
-        (glfw:with-init-window (:title ,title
-                                :width *width*
-                                :height *height*
-                                :opengl-forward-compat t
-                                :opengl-profile :opengl-core-profile
-                                :context-version-major 3
-                                :context-version-minor 3
-                                :decorated t
-                                :resizable nil
-                                ;;full screen mode
-                                ;; :monitor (glfw:get-primary-monitor)
-                                ;; :refresh-rate 60
-                                )
-          ;; (glfw:swap-interval 1)
-          (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
 
-          (unless (gl::features-present-p (>= :glsl-version 3.3))
-            (return nil))
+  ;; Graphics calls on OS X must occur in the main thread
+  ;; (trivial-main-thread:with-body-in-main-thread ())
 
-          ;; initialize
-          (initialize-globals)
-          ,init-code
+  ;; block used to return out of function call
+  `(run-thread
+     (block nil
+       (glfw:with-init-window (:title ,title
+                               :width *width*
+                               :height *height*
+                               :opengl-forward-compat t
+                               :opengl-profile :opengl-core-profile
+                               :context-version-major 3
+                               :context-version-minor 3
+                               :decorated t
+                               :resizable nil
+                               ;;full screen mode
+                               ;; :monitor (glfw:get-primary-monitor)
+                               ;; :refresh-rate 60
+                               )
+         ;; (glfw:swap-interval 1)
+         (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
 
-       ;;; glfw input
-          (glfw:set-key-callback 'key-callback)
-          (glfw:set-mouse-button-callback 'mouse-callback)
-          (glfw:set-cursor-position-callback 'cursor-callback)
-          (glfw:set-scroll-callback 'scroll-callback)
-          ;; (glfw:set-input-mode :cursor :disabled) ;; hides cursor
+         (unless (gl::features-present-p (>= :glsl-version 3.3))
+           (return nil))
 
-          (iter (until (glfw:window-should-close-p))
-            (update-swank)
+         ;; initialize
+         (initialize-globals)
+         ,init-code
 
-            (glfw:poll-events)
+         ;; glfw input
+         (glfw:set-key-callback 'key-callback)
+         (glfw:set-mouse-button-callback 'mouse-callback)
+         (glfw:set-cursor-position-callback 'cursor-callback)
+         (glfw:set-scroll-callback 'scroll-callback)
+         ;; (glfw:set-input-mode :cursor :disabled) ;; hides cursor
 
-            ,input-code
-            ,render-code
-            ,update-code
+         (iter (until (glfw:window-should-close-p))
 
-            (update-files)
-            (update-events)
-            (glfw:swap-buffers)
-            (update-globals))
+           ;; running loop in seperate thread means swank still runs
+           ;; (update-swank)
 
-          ,cleanup-code)))))
+           (continuable
+             (glfw:poll-events)
+
+             ,input-code
+
+             ,render-code
+             ,update-code
+
+             (update-files)
+             (update-events)
+             (glfw:swap-buffers)
+             (update-globals)))
+
+         ,cleanup-code))))

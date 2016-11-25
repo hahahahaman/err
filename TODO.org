@@ -12,6 +12,12 @@ foreign library search path
 * DONE make new project that makes err projects
 CLOSED: [2016-02-19 Fri 08:27]
 my-qp uses html-template to do this.
+* TODO Fix up text-draw, super slow
+* TODO Fix up update-events, can be unbelievably super slow
+perhaps it is a bad idea to use a bunch of lambdas, since closures cons and have
+to be gc'ed
+* TODO Remove model matrix from draw calls
+use dynamic and static draw buffers, probably much more efficient
 * TODO look into memory management for some classes
 finalize program class, drawer class for shaders and buffers
 * TODO switch to sdl2? easier to use, maybe?

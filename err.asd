@@ -15,8 +15,9 @@
                #:fset
                #:glkit
                #:trivial-garbage
+               #:trivial-main-thread
                #:defenum
-               #:swank
+               ;; #:swank
                #:ironclad)
   :serial t
   :components ((:module src

@@ -9,13 +9,18 @@
 (defclass text-drawer (drawer)
   ((vbo
     :accessor vbo
-    :initarg :vbo))
+    :initarg :vbo)
+   (data-array
+    :type gl:gl-array))
   (:default-initargs
    :vbo (gl:gen-buffer)))
 
 (defmethod initialize-instance :after ((drawer text-drawer) &key)
-  (with-slots (vbo) drawer
-    (trivial-garbage:finalize drawer (lambda () (gl:delete-buffers (vector vbo))))))
+  (with-slots (vbo data-array) drawer
+    (setf data-array (gl:alloc-gl-array :float 16))
+    (trivial-garbage:finalize drawer (lambda ()
+                                       (gl:free-gl-array data-array)
+                                       (gl:delete-buffers (vector vbo))))))
 
 ;; TODO get rotation to work
 (defun text-draw (text font-text-chars
@@ -29,7 +34,7 @@
                     (drawer *text-drawer*))
   "=> TEXT-WIDTH, TEXT-HEIGHT
 Draws a text string on screen."
-  (with-slots (program vao vbo) drawer
+  (with-slots (program vao vbo data-array) drawer
     (gl:use-program (id program))
     (gl:uniformfv (get-uniform program "textColor") color)
     (gl:bind-vertex-array vao)
@@ -118,15 +123,26 @@ Draws a text string on screen."
             (gl:enable-vertex-attrib-array 0)
             (gl:vertex-attrib-pointer 0 4 :float nil (sizeof* :float 4) 0)
 
-            (with-sequence-to-gl-array (verts
-                                        (vector
-                                         x       y       0.0 0.0
-                                         (+ x w) y       1.0 0.0
-                                         x       (- y h) 0.0 1.0
-                                         (+ x w) (- y h) 1.0 1.0)
-                                        :float)
+            (flet ((set-data (array &rest data)
+                     (labels ((iter-rest (l n)
+                                (when (and (< n 16) l)
+                                  (setf (gl:glaref array n) (car l))
+                                  (iter-rest (cdr l) (1+ n)))))
+                       (iter-rest data 0))))
+              (set-data data-array
+                        x       y       0.0 0.0
+                        (+ x w) y       1.0 0.0
+                        x       (- y h) 0.0 1.0
+                        (+ x w) (- y h) 1.0 1.0))
+            (gl:buffer-data :array-buffer :dynamic-draw data-array)
 
-              (gl:buffer-data :array-buffer :dynamic-draw verts))
+            ;; (with-sequence-to-gl-array (verts
+            ;;                             (vector x       y       0.0 0.0
+            ;;                                     (+ x w) y       1.0 0.0
+            ;;                                     x       (- y h) 0.0 1.0
+            ;;                                     (+ x w) (- y h) 1.0 1.0)
+            ;;                             :float)
+            ;;   (gl:buffer-data :array-buffer :dynamic-draw verts))
             (gl:draw-arrays :triangle-strip 0 4)
 
             (incf xpos tc-advance))))

@@ -8,7 +8,7 @@
   (* x x x))
 
 (defun dist-mod (a b modulo)
-  "Distance between A and B, when mod."
+  "Distance between A and B mod MODULO."
   (min (mod (- a b) modulo) (mod (- b a) modulo)))
 
 ;; fps
@@ -27,13 +27,10 @@ Average time change over a few hundred frames."
 (defun limit-fps ()
   "Limits frame rate, preventing resource hogging."
 
-  ;; when the frame occurred faster than the max frame time length
-  ;; sleep for that difference
-  (let* ((max-frame-time-length (+ (/ 1.0d0 +max-fps+) *previous-time*))
-         (current-time (glfw:get-time))
-         (sleep-time (- max-frame-time-length current-time)))
-    (when (> sleep-time 0.0)
-      (sleep sleep-time))))
+  ;; if the frame completed quicker than the minimum frame length
+  ;; then sleep for the necessary amount of time
+  (sleep (max 0.0 (- #.(/ 1.0 +max-fps+)
+                     (- (glfw:get-time) *previous-time*)))))
 
 ;;;;;;;;;;;;;;;;;
 ;; handle globals
@@ -52,7 +49,9 @@ Average time change over a few hundred frames."
   (setf *key-actions* nil
         *mouse-button-actions* nil
         *scroll-callback-p* nil
-        *cursor-callback-p* nil))
+        *cursor-callback-p* nil
+        *last-x* *cursor-x*
+        *last-y* *cursor-y*))
 
 (defun update-globals ()
   "A single function that encompasses global updates."
@@ -66,6 +65,7 @@ Average time change over a few hundred frames."
 
   ;; go through all globals setting them to original value
   (iter (for (var-symbol func) on *global-setfs* by #'cddr)
+    (declare (ignore var-symbol))
     (funcall func)))
 
 ;;; type utils
@@ -162,13 +162,13 @@ Remember to free gl-array afterwards."
   `(restart-case
        (progn ,@body) (continue () :report "Continue")))
 
-(defun update-swank ()
-  (ignore-errors
-   "Called from within the main loop, this keep the lisp repl running."
-   (continuable
-     (let ((connection (or swank::*emacs-connection* (swank::default-connection))))
-       (when connection
-         (swank::handle-requests connection t))))))
+;; (defun update-swank ()
+;;   "Called from within the main loop, this keep the lisp repl running."
+;;   (ignore-errors
+;;    (continuable
+;;     (let ((connection (or swank::*emacs-connection* (swank::default-connection))))
+;;       (when connection
+;;         (swank::handle-requests connection t))))))
 
 ;; copy instances
 
@@ -259,11 +259,12 @@ Remember to free gl-array afterwards."
 ;;;
 
 (defun md5 (str)
-  "=> CHECKSUM
+  "=> CHECKSUM (STRING)
 Returns the md5 checksum of STR."
   (ironclad:byte-array-to-hex-string
-   (ironclad:digest-sequence :md5 
+   (ironclad:digest-sequence :md5
                              (ironclad:ascii-string-to-byte-array str))))
+
 (defun valid-checksum-p (checksum other-checksum)
   "=> BOOLEAN
 Checks if two checksums are equal."
@@ -293,11 +294,8 @@ Checks if two checksums are equal."
         (<= (+ x width) o-left)
         (<= (+ o-left o-width) x))))
 
-(defun err-sleep (time)
-  "Stops the program from running for TIME seconds."
-  (sleep time))
-
-(defun file-in-dir (directory-path file)
+(defun file-pathname (directory-path file)
+  "Returns the pathname of FILE in DIRECTORY-PATH"
   (cl-fad:merge-pathnames-as-file (pathname directory-path) (pathname file)))
 
 (defun init-managers ()
@@ -318,11 +316,32 @@ Checks if two checksums are equal."
   (when projection
     (gl:uniform-matrix-4fv (get-uniform program "projection") projection nil)))
 
+(defun set-program-perspective (program
+                                &key
+                                  (view (get-view-matrix *camera*)))
+  (set-program-matrices program
+                        :view view
+                        :projection (kit.glm:perspective-matrix
+                                     (kit.glm:deg-to-rad (zoom *camera*))
+                                     (cfloat (/ *width* *height*))
+                                     0.1 1000.0)))
+
+(defun set-program-orthographic (program
+                                 &key
+                                   (view (get-view-matrix *camera*)))
+  (set-program-matrices program :view view
+                                :projection (kit.glm:ortho-matrix 0.0
+                                                                  (cfloat *width*)
+                                                                  0.0
+                                                                  (cfloat *height*)
+                                                                  -100.0
+                                                                  100.0)))
+
 (defun initialize-shaders (shader-directory)
   (init-managers)
 
   (flet ((file-from-shader-dir (file)
-           (file-in-dir shader-directory file)))
+           (file-pathname shader-directory file)))
     (let ((text-program (make-program (file-from-shader-dir "text.v.glsl")
                                       (file-from-shader-dir "text.f.glsl")))
           (cube-program (make-program (file-from-shader-dir "cube.v.glsl")
@@ -349,43 +368,52 @@ Checks if two checksums are equal."
       (set-program-matrices sprite-program)
       (set-program-matrices text-program :view nil))))
 
-;; (defun make-model-matrix (&key
-;;                             (position (vec3f 0.0 0.0 0.0))
-;;                             (size (vec3f 1.0 1.0 1.0))
-;;                             (color (vec4f 1.0 1.0 1.0 1.0))
-;;                             (rotation (vec3f 0.0 0.0 0.0))
-;;                             (rotation-center (vec3f 0.0 0.0 0.0))
-;;                             (draw-center (vec3f 0.0 0.0 0.0)))
-;;   (kit.glm:matrix*
+(defun initialize-shaders-orthographic (shader-directory)
+  (init-managers)
 
-;;    ;; move into position
-;;    (kit.glm:translate position)
+  (flet ((file-from-shader-dir (file)
+           (file-pathname shader-directory file)))
+    (let ((text-program (make-program (file-from-shader-dir "text.v.glsl")
+                                      (file-from-shader-dir "text.f.glsl")))
+          (cube-program (make-program (file-from-shader-dir "cube.v.glsl")
+                                      (file-from-shader-dir "cube.f.glsl")))
+          (rect-program (make-program (file-from-shader-dir "rect.v.glsl")
+                                      (file-from-shader-dir "rect.f.glsl")))
+          (sprite-program (make-program (file-from-shader-dir "sprite.v.glsl")
+                                        (file-from-shader-dir "sprite.f.glsl"))))
 
-;;    ;; move to draw center
-;;    (kit.glm:translate (vec3f-mul size (vec3f* draw-center -1.0)))
+      (setf *text-drawer* (make-instance 'text-drawer :program text-program)
+            *cube-drawer* (make-instance 'cube-drawer :program cube-program)
+            *rect-drawer* (make-instance 'rect-drawer :program rect-program)
+            *sprite-drawer* (make-instance 'sprite-drawer :program sprite-program)
+            *camera* (make-instance 'camera :position (vec3f 0.0 0.0 100.0)
+                                            :movement-speed 50.0))
 
-;;    ;; move back from rotation center
-;;    (kit.glm:translate (vec3f-mul rotation-center size))
+      (load-program "text" text-program)
+      (load-program "cube" cube-program)
+      (load-program "rect" rect-program)
+      (load-program "sprite" sprite-program)
 
-;;    ;; perform rotation
-;;    (kit.glm:rotate rotation)
+      (set-program-orthographic cube-program)
+      (set-program-orthographic rect-program)
+      (set-program-orthographic sprite-program)
+      (set-program-orthographic text-program :view nil))))
 
-;;    ;; move to rotation center
-;;    (kit.glm:translate (vec3f* (vec3f-mul rotation-center size)
-;;                               -1.0))
+(defmacro defun-discrete-timer (name fps (&rest args) &body body)
+  `(let ((timer (make-timer :end (/ 1.0 ,fps))))
+     (defun ,name (,@args)
+       (timer-update timer)
+       (when (timer-ended-p timer)
+         (timer-reset timer)
+         ,@body))))
 
-;;    ;; scale first
-;;    (kit.glm:scale size)))
-
-;; (defmacro make-model-matrix-in-draw-function ()
-;;   `(make-model-matrix :position position
-;;                       :size size
-;;                       :color color
-;;                       :rotation rotation
-;;                       :rotation-center rotation-center
-;;                       :draw-center draw-center))
-
-;; (defmacro defdraw (func-name))
+(defmacro defun-continuous-timer (name fps (&rest args) &body body)
+  `(let ((timer (make-timer :end (/ 1.0 ,fps))))
+     (defun ,name (,@args)
+       (timer-update timer)
+       (iter (while (timer-ended-p timer))
+             (timer-keep-overflow timer)
+             ,@body))))
 
 (defmacro defrender (func-name fps &body body)
   `(let ((render-timer (make-timer :end (/ 1.0 ,fps))))
@@ -402,3 +430,12 @@ Checks if two checksums are equal."
        (iter (while (timer-ended-p update-timer))
          (timer-keep-overflow update-timer)
          ,@body))))
+
+(defmacro run-thread (&body body)
+  `(bt:make-thread (lambda () ,@body)))
+
+(defun debug-print (object)
+  "Slime REPL rebinds *STANDARD-OUTPUT* while new threads do not.
+LOAD-TIME-VALUE obtains the value of an object at read time, allowing for the
+usage of the rebound *STANDARD-OUTPUT* stream."
+  (print object (load-time-value *standard-output*)))

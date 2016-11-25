@@ -20,7 +20,7 @@ can be used to reset VAR to VAL."
 (defglobal *debug* nil)
 
 ;;; delta time
-(defconstant +max-fps+ 300)
+(defconstant +max-fps+ 200.0)
 (defglobal *dt* 0.02d0) ;; *DT* keeps track of the time since last frame, in seconds
 (defglobal *previous-time* 0.0) ;; *PREVIOUS-TIME* gives the time of the previous frame
 
@@ -81,11 +81,9 @@ time-travel
 events
 |#
 
-(defglobal *destructive-changes*
-    (make-array 3 :element-type 'vector
-                  :initial-element (make-array 0 :adjustable t
-                                                 :fill-pointer 0
-                                                 :element-type 'function)))
+(defglobal *destructive-changes* (make-array 0 :element-type 'cons
+                                               :adjustable t
+                                               :fill-pointer 0))
 
 #|
 resource-manager

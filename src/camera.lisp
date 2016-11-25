@@ -1,10 +1,12 @@
 (in-package :err)
 
 (defenum:defenum camera-movement
-                 ((+forward+ 0)
-                  +backward+
-                  +left+
-                  +right+))
+    ((+forward+ 0)
+     +backward+
+     +left+
+     +right+
+     +up+
+     +down+))
 
 (defclass camera ()
   ((position
@@ -56,10 +58,8 @@
     (kit.glm:look-at position (vec3f+ position front) up)))
 
 (defmethod process-direction-movement ((cam camera) direction dt)
-  (with-slots (movement-speed front right position) cam
-    (let ((velocity (cfloat (* movement-speed dt)))
-          ;; (original-y (y-val position))
-          )
+  (with-slots (movement-speed front right position up) cam
+    (let ((velocity (cfloat (* movement-speed dt))))
       (cond ((eql direction +forward+)
              (setf position (vec3f+ position (vec3f* front velocity))))
             ((eql direction +backward+)
@@ -67,7 +67,11 @@
             ((eql direction +left+)
              (setf position (vec3f- position (vec3f* right velocity))))
             ((eql direction +right+)
-             (setf position (vec3f+ position (vec3f* right velocity))))))))
+             (setf position (vec3f+ position (vec3f* right velocity))))
+            ((eql direction +up+)
+             (setf position (vec3f+ position (vec3f* up velocity))))
+            ((eql direction +down)
+             (setf position (vec3f- position (vec3f* up velocity))))))))
 
 (defmethod process-rotation-movement ((cam camera) x y &optional (constrain-pitch t))
   (with-slots (mouse-sensitivity yaw pitch) cam
